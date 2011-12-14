@@ -1,17 +1,17 @@
 % Simulation of Resting-state/Task data pairs
 clear all; close all;
-filepath = 'D:/research/';
-addpath(genpath([filepath,'toolboxes/l1General']));
-addpath(genpath([filepath,'toolboxes/lightspeed']));
-addpath(genpath([filepath,'toolboxes/markSchmidtCode']));
-addpath(genpath([filepath,'covarianceEstimationNg']));
-addpath(genpath([filepath,'bayesianRegressionNg']));
+localpath = '/volatile/bernardng/';
+netwpath = '/home/bn228083/';
+addpath(genpath([localpath,'matlabToolboxes/lightspeed']));
+addpath(genpath([localpath,'matlabToolboxes/markSchmidtCode']));
+addpath(genpath([netwpath,'code/covarianceEstimationNg']));
+addpath(genpath([netwpath,'code/bayesianRegressionNg']));
 % Parameters
 nSubs = 10; 
-nROIs = 800; 
+nROIs = 850; 
 Id = eye(nROIs);
-nActive = 50;
-nNonActive = 50;
+nActive = 200;
+nNonActive = 200;
 nTpts = 200;
 dense = 0.05;
 gamma = 10; 
@@ -38,6 +38,18 @@ for i = nActive+nNonActive+1:nROIs
     y(:,i) = 0.1*randn(size(t));
 end
 Kint = inv(cov(y));
+
+% Add ROIs that are connected to every other ROIs
+roi = 840:850;
+temp = zeros(length(roi),1);
+for i = 1:length(roi)
+    temp(i) = Kint(roi(i),roi(i));
+end
+Kint(roi,:) = randn(length(roi),nROIs)*median(Kint(~eye(nROIs)));
+Kint(:,roi) = randn(nROIs,length(roi))*median(Kint(~eye(nROIs)));
+for i = 1:length(roi)
+    Kint(roi(i),roi(i)) = temp(i);
+end
 
 % [S,C] = graphconncomp(Kint,'direct','false');
 
@@ -84,12 +96,12 @@ for k = 1:nIter
         betaOLS(sub,:) = X\Y;
         
         % GL
-        paramSelMethod = 1;
+        paramSelMethod = 1; % 1 = CV, 2 = Model Evidence
         optMethod = 1; % 1 = GL via two-metric projection, 2 = (Friedman,2007)
-        kFolds = 2;
+        kFolds = 3;
         nLevels = 5;
         nGridPts = 5;
-        model = 8;
+        model = 1;
         modelEvid = @(V)modelEvidence(X,Y,V,model);
         K = sparseGGM(tcRest(:,:,sub),paramSelMethod,optMethod,'linear',kFolds,nLevels,nGridPts,modelEvid);
         betaGL(sub,:) = bayesianRegression(X,Y,K,model);

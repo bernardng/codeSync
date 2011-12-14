@@ -17,7 +17,7 @@ nGridPts = 5; % Number of grid points for lambda, need to be odd number
 nLevels = 6; % Number of refinements on lambda grid
 nROIs = 850;
 K = zeros(nROIs,nROIs,nSubs);
-matlabpool;
+matlabpool(7);
 parfor sub = 1:nSubs
     if dataType == 1 % Load rest data
         temp = load([localpath,'data/imagen/',sublist{sub},'/tcRestParcel1000']);

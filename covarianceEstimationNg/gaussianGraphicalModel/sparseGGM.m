@@ -10,8 +10,8 @@
 %           varargin = variables required for computing user-defined model evidence
 % Output:   K = dxd sparse inverse covariance matrix
 function K = sparseGGM(X,paramSelMethod,optMethod,param,kFolds,nLevels,nGridPts,modelEvid,varargin)
-netwpath = '/home/bn228083/';
-addpath(genpath([netwpath,'matlabToolboxes/markSchmidtCode']));
+localpath = '/volatile/bernardng/';
+addpath(genpath([localpath,'matlabToolboxes/markSchmidtCode']));
 [n,d] = size(X);
 % Determine optimal amount of regularization
 if paramSelMethod == 1 % Cross validation 

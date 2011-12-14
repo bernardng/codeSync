@@ -49,16 +49,18 @@ else % Linear scale
     lambdaMin = lambdaMax/100;
     lambdaMid = (lambdaMax+lambdaMin)/2;
     evidBest = -inf;
+    lambdaAcc = [];
     for i = 1:nLevels % Number of refinements
         lambdaStep = (lambdaMax-lambdaMin)/nGridPts/i;
         for j = 1:nGridPts % Number of grid points
             lambda = lambdaMid+(j-round(nGridPts/2))*lambdaStep;
             if i > 1
-                if lambda > lambdaMax || lambda == lambdaBest
+                if lambda > lambdaMax || sum(lambda == lambdaAcc)
                     nSkip = nSkip+1;
                     continue; % To avoid computing with the same lambda
                 end
             end
+            lambdaAcc = [lambdaAcc;lambda]; % Store computed lambdas
             if optMethod == 1 % Graphical LASSO via two-metric projection
                 nonZero = find(ones(d));
                 funObj = @(x)sparsePrecisionObj(x,d,nonZero,Strain);
