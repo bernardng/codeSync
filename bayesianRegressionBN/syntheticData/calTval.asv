@@ -1,0 +1,11 @@
+% Calculate the t-value of each voxel
+function [beta,tval] = calTval(tc,ref)
+
+nTpts = size(tc,1);
+beta = pinv(ref')*tc';
+S = sum((tc'-ref'*beta).^2);
+temp = inv(ref*ref');
+for j = 1:size(ref,1)
+    sigj = sqrt(S*temp(j,j)/(nTpts-size(ref,1)-1)); % Interested in testing beta of ref
+    tval(j,:) = beta(j,:)./sigj;
+end

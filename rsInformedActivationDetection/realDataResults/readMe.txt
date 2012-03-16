@@ -1,1 +1,0 @@
-Current sig*.mat generated from 10,000 permutations.
