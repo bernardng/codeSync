@@ -1,0 +1,25 @@
+--------------------
+Preprocessing
+--------------------
+0. Define path to scripts
+
+script_path=/home/bn228083/code/dMRIanalysis
+
+1. Align DWI volumes witin dwi.nii.
+
+fsl4.1-eddy_correct dwi.nii dwi_ecc.nii 0
+gunzip -f dwi_ecc.nii.gz
+
+2. Apply tensor reorientation.
+
+$script_path/rotatebvecs bvec.bvec bvec_ecc.bvec dwi_ecc.ecclog
+
+- Tensor reorientation performed by rotating vectors in the gradient table
+- Must use bvec.bvec as input, i.e. [--gx--;--gy--;--gz--]
+- dwi_ecc.ecclog is generated during step 1
+
+3. Generate a column version of bvec_ecc.bvec (required for conversion from nii to nrrd)
+
+python $script_path/columnizebvecs.py -i bvec_ecc.bvec
+
+- Output saved as bvec_ecc.txt

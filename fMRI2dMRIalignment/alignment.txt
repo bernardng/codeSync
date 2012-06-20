@@ -1,0 +1,55 @@
+--------------------
+Notes
+--------------------
+- Ensure the following files are in the same folder as dwi_ecc.nii:
+i.   rest.nii = 4D resting-state fMRI volume
+ii.  wmMask.nii = subject-specific WM probabilistic map from SPM8
+iii. fs_parcel500.nii
+
+--------------------
+Procedures
+--------------------
+0. Define path to scripts
+
+script_path=/home/bn228083/code/fMRI2dMRIalignment
+
+1. Average the 4D EPI and DWI volumes
+
+python $script_path/genAveVol.py -i rest.nii
+python $script_path/genAveVol.py -i dwi_ecc.nii
+
+- Output saved as rest_ave.nii and dwi_ecc_ave.nii
+
+2. Apply BET to remove skull from rest_ave.nii and dwi_ecc_ave.nii
+
+fsl4.1-bet rest_ave.nii rest_ave_ss.nii -m -f 0.3
+gunzip -f rest_ave_ss.nii.gz
+gunzip -f rest_ave_ss_mask.nii.gz
+fsl4.1-bet dwi_ecc_ave.nii dwi_ecc_ave_ss.nii -m -f 0.3
+gunzip -f dwi_ecc_ave_ss.nii.gz
+gunzip -f dwi_ecc_ave_ss_mask.nii.gz
+
+3. Resample rest_ave_ss.nii, fs_parcel500.nii, and wmMask.nii to resolution of dwi_ecc_ave_ss.nii
+
+python $script_path/resample.py -i rest_ave_ss.nii -r dwi_ecc_ave_ss.nii
+python $script_path/resample.py -i fs_parcel500.nii -r dwi_ecc_ave_ss.nii
+python $script_path/resample.py -i wmMask.nii -r dwi_ecc_ave_ss.nii
+
+- Output saved as rest_ave_ss_rs.nii, fs_parcel500_rs.nii, and wmMask_rs.nii
+
+4. Apply FLIRT to affinely align rest_ave_ss_rs.nii to dwi_ecc_ave_ss.nii
+
+fsl4.1-flirt -in rest_ave_ss_rs.nii -ref dwi_ecc_ave_ss.nii -out rest_ave_ss_rs_aff -omat mni3mmtodwi_aff.txt 
+gunzip -f rest_ave_ss_rs_aff.nii.gz
+
+5. Apply learned warp to fs_parcel500_rs.nii and wmMask_rs.nii
+
+fsl4.1-flirt -in fs_parcel500_rs.nii -ref dwi_ecc_ave_ss.nii -applyxfm -init mni3mmtodwi_aff.txt -out fs_parcel500_rs_aff.nii -interp nearestneighbour
+gunzip -f fs_parcel500_rs_aff.nii.gz
+fsl4.1-flirt -in wmMask_rs.nii -ref dwi_ecc_ave_ss.nii -applyxfm -init mni3mmtodwi_aff.txt -out wmMask_rs_aff.nii
+gunzip -f wmMask_rs_aff.nii.gz
+
+
+
+
+

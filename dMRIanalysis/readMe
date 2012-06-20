@@ -1,0 +1,7 @@
+mention need to add dMRIanalysis to ~./bashrc
+mention the different files in dMRIanalysis
+
+order
+1. preproc
+2. alignment
+3. tractography
