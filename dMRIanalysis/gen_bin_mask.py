@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', dest='filename')
     parser.add_argument('-t', dest='threshold', default=0.33)
     filepath = parser.parse_args().filename
-    thresh = float(parser.parse_args().threshold)
+    thresh = np.float32(parser.parse_args().threshold)
     path, afile = os.path.split(filepath)
     afile = afile.replace('.nii', '_bin.nii')
     vol_img = as_volume_img(filepath)

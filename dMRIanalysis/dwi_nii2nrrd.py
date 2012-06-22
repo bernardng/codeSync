@@ -69,7 +69,6 @@ def getBVecs(bvalFileName, bvecFileName, nifti):
 
 
 def makeHeader(nifti):
-    python dwi_nii2nrrd.py -i dwi_ecc_int16.nii
     image=nib.load(nifti)
     data=image.get_header()
     pixdim=data['pixdim'][1:4]

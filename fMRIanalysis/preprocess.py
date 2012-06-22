@@ -1,14 +1,14 @@
 """
 Preprocessing 
-Input:  tc_file = location of time courses to be preprocessed
-        gm_file = location of gray matter mask
-        wm_file = location of white matter mask
-        csf_file = location of CSF mask
-        reg_file = location of regressor matrix
+Input:  tc_file = location of time courses to be preprocessed (.nii)
+        gm_file = location of gray matter mask (.nii)
+        wm_file = location of white matter mask (.nii)
+        csf_file = location of CSF mask (.nii)
+        reg_file = location of regressor matrix (.txt/.mat)
         dtype = task (0) or resting state (1) data
         TR = repetition time
         n_cond = #experimental conditions, i.e. #task regressors in regressor matrix
-Output: tc = preprocessed voxel time courses
+Output: tc = preprocessed voxel time courses saved as tc_vox.mat to folder of tc_file
 """
 import os
 import numpy as np
@@ -27,16 +27,16 @@ if __name__ == '__main__':
     parser.add_argument('-reg', dest='reg_file')
     parser.add_argument('-dtype', dest='dtype')
     parser.add_argument('-tr', dest='tr')
+    parser.add_argument('-c', dest='n_cond')    
     tc_file = parser.parse_args().tc_file
     gm_file = parser.parse_args().gm_file
     wm_file = parser.parse_args().wm_file
     csf_file = parser.parse_args().csf_file
     reg_file = parser.parse_args().reg_file
-    data_type = parser.parse_args().dtype
-    TR = float(parser.parse_args().tr)
+    data_type = np.float32(parser.parse_args().dtype)
+    TR = np.float32(parser.parse_args().tr)
     if data_type == 0:
-        parser.add_argument('-c', dest='n_cond')    
-        n_cond = float(parser.parse_args().n_cond)
+        n_cond = np.float32(parser.parse_args().n_cond)
     path, afile = os.path.split(tc_file)
     
     if data_type:  
@@ -105,12 +105,15 @@ if __name__ == '__main__':
         regressors = np.hstack((regressors, np.roll(confounds, i, axis=0)))       
     
     # Temporal detrending
-    if data_type: # Resting state
+    if data_type == 1: # Resting state
         print "Removing confounds..."            
         # Standardize all regressors
-        regressors = regressors - np.mean(regressors, axis=0)
-        regressors = regressors / np.std(regressors, axis=0)
-        regressors = np.hstack((regressors, np.ones((n_tpts, 1))))
+        reg_std = np.std(regressors, axis=0) 
+        ind = reg_std > 1e-16 # Avoid div by 0 when regressors contain a column of ones
+        regressors[:, ind] = regressors[:, ind] - np.mean(regressors[:, ind], axis=0)
+        regressors[:, ind] = regressors[:, ind] / reg_std[ind]
+        if np.sum(ind) == regressors.shape[1]: # If all regressors have non-zero std, then insert a column of ones
+            regressors = np.hstack((regressors, np.ones((n_tpts, 1)))) # a column of ones
         beta, _, _, _ = linalg.lstsq(regressors, tc)
         tc -= np.dot(regressors, beta)      
         
@@ -128,9 +131,12 @@ if __name__ == '__main__':
         for i in np.arange(np.floor(2 * T / T_cut)) + 1: 
             regressors = np.hstack((regressors, signal.cos(i * np.pi * t / T).reshape(-1, 1)))
         # Standardize all regressors
-        regressors = regressors - np.mean(regressors, axis=0)
-        regressors = regressors / np.std(regressors, axis=0)
-        regressors = np.hstack((regressors, np.ones((n_tpts, 1)))) # a column of ones
+        reg_std = np.std(regressors, axis=0) 
+        ind = reg_std  > 1e-16 # Avoid div by 0 when regressors contain a column of ones
+        regressors[:, ind] = regressors[:, ind] - np.mean(regressors[:, ind], axis=0)
+        regressors[:, ind] = regressors[:, ind] / reg_std[ind]
+        if np.sum(ind) == regressors.shape[1]: # If all regressors have non-zero std, then insert a column of ones
+            regressors = np.hstack((regressors, np.ones((n_tpts, 1)))) # a column of ones
         beta, _, _, _ = linalg.lstsq(regressors, tc)        
         tc -= np.dot(regressors[:, n_cond:], beta[n_cond:, :])       
 

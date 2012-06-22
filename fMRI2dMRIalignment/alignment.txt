@@ -39,7 +39,7 @@ python $script_path/resample.py -i wmMask.nii -r dwi_ecc_ave_ss.nii
 
 4. Apply FLIRT to affinely align rest_ave_ss_rs.nii to dwi_ecc_ave_ss.nii
 
-fsl4.1-flirt -in rest_ave_ss_rs.nii -ref dwi_ecc_ave_ss.nii -out rest_ave_ss_rs_aff -omat mni3mmtodwi_aff.txt 
+fsl4.1-flirt -in rest_ave_ss_rs.nii -ref dwi_ecc_ave_ss.nii -out rest_ave_ss_rs_aff.nii -omat mni3mmtodwi_aff.txt 
 gunzip -f rest_ave_ss_rs_aff.nii.gz
 
 5. Apply learned warp to fs_parcel500_rs.nii and wmMask_rs.nii

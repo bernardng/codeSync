@@ -7,9 +7,9 @@ from nipy.labs import as_volume_img
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert data to uint8 (-t 0) or int16 (-t 1).')
     parser.add_argument('-i', dest='filename')
-    parser.add_argument('-t', dest='filetype', type=int)
+    parser.add_argument('-t', dest='filetype')
     filepath = parser.parse_args().filename
-    input_type = parser.parse_args().filetype
+    input_type = np.float32(parser.parse_args().filetype)
     path, afile = os.path.split(filepath)
     vol_img = as_volume_img(filepath)
     if input_type == 0:
