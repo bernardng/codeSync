@@ -5,7 +5,7 @@
 function C = oas(tc)
 [n,p] = size(tc);
 S = cov(tc); % Empirical covariance
-F = trace(S)*eye(p)/p; % Most well-conditioned Estimate
+F = trace(S)*eye(p)/p; % Most well-conditioned estimate
 trS2 = trace(S*S);
 tr2S = trace(S)^2;
 rho = min(((1-2/p)*trS2+tr2S)/((n+1-2/p)*(trS2-tr2S/p)),1); % Relative weighting

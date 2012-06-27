@@ -136,15 +136,13 @@ def createNrrd(nifti, header, bval, bvecs):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-i', '--input', dest='files', nargs='+', required=True, help='enter the name of the nifti files to be converted')
-    args = parser.parse_args()
-
-    for nifti in args.files:
-        [path, afile] = os.path.split(nifti)
-        bvalFileName = os.path.join(path, 'bval.txt')
-        #[path, afile] = os.path.split(nifti)
-        bvecFileName = os.path.join(path, 'bvec_ecc.txt')
-        [bvecs, bval] = getBVecs(bvalFileName, bvecFileName, nifti)
-        header = makeHeader(nifti)
-        createNrrd(nifti, header, bval, bvecs)
+    parser = argparse.ArgumentParser(description='Enter location of DWI, bval, and bvec files')
+    parser.add_argument('-i', dest='dwi_file')
+    parser.add_argument('-bval', dest='bval_file')
+    parser.add_argument('-bvec', dest='bvec_file')
+    dwi_file = parser.parse_args().dwi_file
+    bval_file = parser.parse_args().bval_file
+    bvec_file = parser.parse_args().bvec_file
+    [bvecs, bval] = getBVecs(bval_file, bvec_file, dwi_file)
+    header = makeHeader(dwi_file)
+    createNrrd(dwi_file, header, bval, bvecs)

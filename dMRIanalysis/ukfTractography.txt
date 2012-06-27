@@ -22,11 +22,10 @@ python $script_path/convertType.py -i dwi_ecc.nii -t 1
 
 - Output saved as dwi_ecc_int16.nii
 
-2. Convert $script_path/dwi_ecc_int16.nii to NRRD
+2. Convert dwi_ecc_int16.nii to NRRD
 
-python dwi_nii2nrrd.py -i dwi_ecc_int16.nii
+python $script_path/dwi_nii2nrrd.py -i dwi_ecc_int16.nii -bval bval.txt -bvec bvec_ecc.txt
 
-- The code assumes bvec_ecc.txt and bval.txt are in the same folder as dwi_ecc_int16.nii
 - Gradient table contained in bvec_ecc.txt must be in 3 columns format
 
 3. Binarize probabilistic white matter template to generate a mask
