@@ -23,4 +23,4 @@ $script_path/rotatebvecs bvec.bvec bvec_ecc.bvec dwi_ecc.ecclog
 python $script_path/columnize.py -i bvec_ecc.bvec -o bvec_ecc.txt -d 6
 python $script_path/columnize.py -i bval.bval -o bval.txt -d 0
 
-
+- "-d 6" => keep 6 decimal places

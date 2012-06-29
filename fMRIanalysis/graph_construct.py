@@ -22,6 +22,7 @@ if __name__ == '__main__':
     rois = np.unique(template)
     rois = rois[1:] # Remove background
     n_rois = np.size(rois)
+    n_neigh = 3
     
     # Build adjacency matrix
     graph_adjacent = np.zeros((n_rois, n_rois))
@@ -31,7 +32,6 @@ if __name__ == '__main__':
         # Put 1 in adjacency matrix for ROIs that the diated mask intersect
         graph_adjacent[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, -1)))] = 1 # -1 to account for background removal
     graph_adjacent = (graph_adjacent + graph_adjacent.T) > 0 # Symmeterization
-
     # Save adjacency matrix    
     io.savemat(os.path.join(path, 'graph_adjacent_' + afile), {"A": graph_adjacent})
     
@@ -40,12 +40,45 @@ if __name__ == '__main__':
     grid = np.mgrid[0:template.shape[0], 0:template.shape[1], 0:template.shape[2]] # Three 3D volumes of x, y, and z coords
     roi_cen = (grid[np.newaxis, :] * masks[:, np.newaxis, :]).reshape(n_rois + 1, 3, -1).sum(axis=-1) / masks.reshape(n_rois + 1, -1).sum(axis=-1).astype(np.float64)[:, np.newaxis]
     roi_cen = roi_cen[1:] # Compute centroid of each ROI
+    x_cen = np.mean(grid[0][template > 0]) # Centroid computed at voxel level
     roi_cen_xflip = roi_cen.copy()
-    roi_cen_xflip[:, 0] = 2 * np.mean(roi_cen[:, 0]) - roi_cen[:, 0] # Find bilateral ROI
-    ind_neigh = np.sum((roi_cen[np.newaxis, :] - roi_cen_xflip[:, np.newaxis, :]) ** 2, axis=2).argmin(axis=1)
-    graph_bilateral = np.zeros((n_rois, n_rois))
-    graph_bilateral[np.arange(n_rois), ind_neigh] = 1
-    graph_bilateral = (graph_bilateral + graph_bilateral.T) > 0 # Symmeterization
-    
+    roi_cen_xflip[:, 0] = 2 * x_cen - roi_cen[:, 0] # Find bilateral ROI
+    ind_neigh = np.sum((roi_cen[np.newaxis, :] - roi_cen_xflip[:, np.newaxis, :]) ** 2, axis=2).argsort(axis=1)
+    graph_bilateral = np.zeros((n_rois, n_rois, n_neigh))
+    for n in np.arange(n_neigh):
+        graph_bilateral[np.arange(n_rois), ind_neigh[:, n], n] = 1
+        graph_bilateral[:, :, n] = (graph_bilateral[:, :, n] + graph_bilateral[:, :, n].T) > 0 # Symmeterization
+        if n > 0:        
+            graph_bilateral[:, :, n] += np.sum(graph_bilateral[:, :, 0:n], axis=2)
+        graph_bilateral = graph_bilateral > 0
     # Save bilateral connection matrix    
     io.savemat(os.path.join(path, 'graph_bilateral_' + afile), {"B": graph_bilateral})
+    
+    # Build ipsilateral connection matrix
+    ind_left = np.nonzero(roi_cen[:, 0] > x_cen) # Parcels on left side of brain    
+    ind_right = np.nonzero(roi_cen[:, 0] <= x_cen) # Parcels on right side of brain
+    # Build left ipsilateral connection matrix
+    graph_left_ipsi = np.zeros((n_rois, n_rois))
+    for nr in ind_left[0]:
+        # Generate dilated mask for each ROI, in which the border would intersect with adjacent ROIs
+        mask = binary_dilation(template == rois[nr], structure=np.ones((2, 2, 2)))
+        # Put 1 in adjacency matrix for ROIs that the diated mask intersect
+        graph_left_ipsi[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, rois[ind_right[0]] - 1, -1)))] = 1 # -1 to account for background removal
+    graph_left_ipsi = (graph_left_ipsi + graph_left_ipsi.T) > 0 # Symmeterization
+    # Save left ipsilater connection matrix    
+    io.savemat(os.path.join(path, 'graph_left_ipsi_' + afile), {"L": graph_left_ipsi})
+    
+    # Build right ipsilateral connection matrix
+    graph_right_ipsi = np.zeros((n_rois, n_rois))
+    for nr in ind_right[0]:
+        # Generate dilated mask for each ROI, in which the border would intersect with adjacent ROIs
+        mask = binary_dilation(template == rois[nr], structure=np.ones((2, 2, 2)))
+        # Put 1 in adjacency matrix for ROIs that the diated mask intersect
+        graph_right_ipsi[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, rois[ind_left[0]] - 1, -1)))] = 1 # -1 to account for background removal
+    graph_right_ipsi = (graph_right_ipsi + graph_right_ipsi.T) > 0 # Symmeterization
+    # Save right ipsilater connection matrix    
+    io.savemat(os.path.join(path, 'graph_right_ipsi_' + afile), {"R": graph_right_ipsi})
+
+
+    
+    

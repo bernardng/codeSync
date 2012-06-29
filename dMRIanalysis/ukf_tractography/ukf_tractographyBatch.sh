@@ -4,7 +4,7 @@ script_path='/home/bn228083/code/dMRIanalysis'
 for line in `cat /volatile/bernardng/data/imagen/subjectLists/subjectListDWI.txt`
 do
 cd /volatile/bernardng/data/imagen/$line/dwi/
-python $script_path/convertType.py -i dwi_ecc.nii -t 1
+python $script_path/convert_type.py -i dwi_ecc.nii -t 1
 python $script_path/dwi_nii2nrrd.py -i dwi_ecc_int16.nii -bval bval.txt -bvec bvec_ecc.txt
 python $script_path/gen_bin_mask.py -i wmMask_rs_aff.nii -t 0.33
 python $script_path/nii2nrrd.py -i wmMask_rs_aff_bin.nii
@@ -14,5 +14,7 @@ mkdir -p results_ukf
 mv dwi_ecc_int* results_ukf
 mv wmMask* alignment
 mv alignment/wmMask_rs_aff_bin.nii .
+mv alignment/wmMask_rs_aff_bin.nhdr results_ukf
+mv alignment/wmMask_rs_aff_bin.raw.gz results_ukf
 mv tracks_ukf.vtk results_ukf
 done
