@@ -2,7 +2,6 @@
 clear all; close all;
 netwpath = '/home/bn228083/code/';
 localpath = '/volatile/bernardng/';
-addpath(genpath([netwpath,'bayesianRegressionBN']));
 addpath(genpath([netwpath,'covarianceEstimationBN']));
 addpath(genpath([netwpath,'matlabToolboxes/quic']));
 fid = fopen([localpath,'data/imagen/subjectLists/subjectListDWI.txt']);
@@ -10,7 +9,7 @@ nSubs = 60;
 for i = 1:nSubs
     sublist{i} = fgetl(fid);
 end
-subs = 1:nSubs; 
+subs = 31:40; 
 
 % Parameters
 dataType = 1; % 1 = rest, 2 = task
@@ -19,26 +18,24 @@ nLevels = 3; % Number of refinements on lambda grid
 nGridPts = 5; % Number of grid points for lambda, need to be odd number
 nWt = 5; % Number of sigma in exp(-Kanat/sigma) for weighting |Kij|
 
-% paramSelMethod = 1; % 1 = CV, 2 = Model Evidence
-% model = 1;
-
-nROIs = 491; % Number of parcels
-K = zeros(nROIs,nROIs,length(subs));
+nROIs = 502; % Number of parcels
+Kacc = zeros(nROIs,nROIs,length(subs));
 lambda = zeros(length(subs),1);
 sigma = zeros(length(subs),1);
-matlabpool(6);
-parfor sub = 1:nSubs
+% matlabpool(7);
+% parfor sub = 1:nSubs
+for sub = subs
     if dataType == 1 % Load rest data
-        tc_parcel = load([localpath,'data/imagen/',sublist{sub},'/restfMRI/tc_rest_parcel500.mat']);
-        Y = tc_parcel.tc_parcel;
+        tc = load([localpath,'data/imagen/',sublist{sub},'/restfMRI/tc_fs_parcel500.mat']);
+        Y = tc.tc;
     elseif dataType == 2 % Load task data
-        tc_parcel = load([localpath,'data/imagen/',sublist{sub},'/gcafMRI/tc_task_parcel500.mat']);
-        Y = tc_parcel.tc_parcel;
+        tc = load([localpath,'data/imagen/',sublist{sub},'/gcafMRI/tc_fs_parcel500.mat']);
+        Y = tc.tc;
     end
-    Kanat = load([localpath,'data/imagen/',sublist{sub},'/dwi/K_anatDense_parcel500.mat']);
-    Kanat = Kanat.Kanat;
-    % Binarize Kanat
-    Kanat = Kanat > 0; % Might have to adjust threshold
+    % Load anatomical connectivity estimates
+    Kanat = load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ukf/K_fs_parcel500.mat']);
+    Kanat = Kanat.Kfibcnt;
+    
     % Skipping first time point so that timecourses can be evenly divided into 3 folds
     Y(1,:) = [];    
     
@@ -47,26 +44,22 @@ parfor sub = 1:nSubs
     Y = Y./(ones(size(Y,1),1)*std(Y));
     
     % Insert random signal for zero time courses
-   indNan = isnan(Y);
-   if sum(indNan(:))~=0
-       Y(indNan) = randn(sum(indNan(:)),1);
-   end
+    indNan = isnan(Y);
+    if sum(indNan(:))~=0
+        Y(indNan) = randn(sum(indNan(:)),1);
+    end
     
     % Sparse Inverse Covariance Estimation
-    [K(:,:,sub),lambda(sub),sigma(sub)] = weightedSGGMcv(Y,kFolds,nLevels,nGridPts,Kanat,nWt);
-%     load([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_rest_anatDense_roi_fs_quic355_cv.mat']);
-
-%     modelEvid = @(V)modelEvidence(X,Y,V,model);
-%     K = sparseGGM(Y,paramSelMethod,optMethod,'linear',kFolds,nLevels,nGridPts,modelEvid);
+    [Kacc(:,:,sub),lambda(sub),sigma(sub)] = wsggmCV(Y,kFolds,nLevels,nGridPts,Kanat,nWt);
     disp(['Done subject',int2str(sub)]);
 end
-matlabpool('close');
+% matlabpool('close');
 
 for sub = subs
-    Krest = K(:,:,sub);
+    K = Kacc(:,:,sub);
     lambdaBest = lambda(sub);
     sigmaBest = sigma(sub);
-    save([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_rest_anatDenseBin_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),'_cv.mat'],'Krest','lambdaBest','sigmaBest');
+    save([localpath,'data/imagen/',sublist{sub},'/multimodalConn/results_ukf/K_fibcnt_fs_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),int2str(nWt),'_cv.mat'],'K','lambdaBest','sigmaBest');
 end
     
 

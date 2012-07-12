@@ -3,6 +3,8 @@ Parcel graph construction
 Input:  template_file = location of parcel template (.nii)
 Output: graph_adjacent = binary dxd matrix with 1 for spatially-connected parcels (.mat)
         graph_bilateral = binary dxd matrix with 1 for bilateral parcel pairs (.mat)
+        graph_right_ipsi = binary dxd matrix with 1 for spatially-connected parcels on right side of brain (.mat)
+        graph_left_ipsi = binary dxd matrix with 1 for spatially-connected parcels on left side of brain (.mat)
 """
 import os
 import numpy as np
@@ -22,7 +24,26 @@ if __name__ == '__main__':
     rois = np.unique(template)
     rois = rois[1:] # Remove background
     n_rois = np.size(rois)
-    n_neigh = 3
+    n_neigh = 1 # Increase n_neigh to increase robustness to parcellation errors
+    
+    # Build bilateral connection matrix
+    masks = template[np.newaxis, :] == np.arange(n_rois + 1)[:, np.newaxis, np.newaxis, np.newaxis] # Each row = mask of an ROI
+    grid = np.mgrid[0:template.shape[0], 0:template.shape[1], 0:template.shape[2]] # Three 3D volumes of x, y, and z coords
+    roi_cen = (grid[np.newaxis, :] * masks[:, np.newaxis, :]).reshape(n_rois + 1, 3, -1).sum(axis=-1) / masks.reshape(n_rois + 1, -1).sum(axis=-1).astype(np.float64)[:, np.newaxis]
+    roi_cen = roi_cen[1:] # Compute centroid of each ROI
+    x_cen = np.mean(grid[0][template > 0]) # x centroid computed at voxel level
+    roi_cen_xflip = roi_cen.copy()
+    roi_cen_xflip[:, 0] = 2 * x_cen - roi_cen[:, 0] # Find bilateral ROI
+    ind_neigh = np.sum((roi_cen[np.newaxis, :] - roi_cen_xflip[:, np.newaxis, :]) ** 2, axis=2).argsort(axis=1)
+    graph_bilateral = np.zeros((n_rois, n_rois, n_neigh))
+    for n in np.arange(n_neigh):
+        graph_bilateral[np.arange(n_rois), ind_neigh[:, n], n] = 1
+        graph_bilateral[:, :, n] = (graph_bilateral[:, :, n] + graph_bilateral[:, :, n].T) # Symmeterization
+        if n > 0:        
+            graph_bilateral[:, :, n] += np.sum(graph_bilateral[:, :, 0:n], axis=2)
+        graph_bilateral = graph_bilateral > 0
+    # Save bilateral connection matrix    
+    io.savemat(os.path.join(path, 'graph_bilateral_' + afile), {"B": graph_bilateral})
     
     # Build adjacency matrix
     graph_adjacent = np.zeros((n_rois, n_rois))
@@ -32,27 +53,9 @@ if __name__ == '__main__':
         # Put 1 in adjacency matrix for ROIs that the diated mask intersect
         graph_adjacent[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, -1)))] = 1 # -1 to account for background removal
     graph_adjacent = (graph_adjacent + graph_adjacent.T) > 0 # Symmeterization
+    graph_adjacent = graph_adjacent * (1 - graph_bilateral[:, :, -1])
     # Save adjacency matrix    
     io.savemat(os.path.join(path, 'graph_adjacent_' + afile), {"A": graph_adjacent})
-    
-    # Build bilateral connection matrix
-    masks = template[np.newaxis, :] == np.arange(n_rois + 1)[:, np.newaxis, np.newaxis, np.newaxis] # Each row = mask of an ROI
-    grid = np.mgrid[0:template.shape[0], 0:template.shape[1], 0:template.shape[2]] # Three 3D volumes of x, y, and z coords
-    roi_cen = (grid[np.newaxis, :] * masks[:, np.newaxis, :]).reshape(n_rois + 1, 3, -1).sum(axis=-1) / masks.reshape(n_rois + 1, -1).sum(axis=-1).astype(np.float64)[:, np.newaxis]
-    roi_cen = roi_cen[1:] # Compute centroid of each ROI
-    x_cen = np.mean(grid[0][template > 0]) # Centroid computed at voxel level
-    roi_cen_xflip = roi_cen.copy()
-    roi_cen_xflip[:, 0] = 2 * x_cen - roi_cen[:, 0] # Find bilateral ROI
-    ind_neigh = np.sum((roi_cen[np.newaxis, :] - roi_cen_xflip[:, np.newaxis, :]) ** 2, axis=2).argsort(axis=1)
-    graph_bilateral = np.zeros((n_rois, n_rois, n_neigh))
-    for n in np.arange(n_neigh):
-        graph_bilateral[np.arange(n_rois), ind_neigh[:, n], n] = 1
-        graph_bilateral[:, :, n] = (graph_bilateral[:, :, n] + graph_bilateral[:, :, n].T) > 0 # Symmeterization
-        if n > 0:        
-            graph_bilateral[:, :, n] += np.sum(graph_bilateral[:, :, 0:n], axis=2)
-        graph_bilateral = graph_bilateral > 0
-    # Save bilateral connection matrix    
-    io.savemat(os.path.join(path, 'graph_bilateral_' + afile), {"B": graph_bilateral})
     
     # Build ipsilateral connection matrix
     ind_left = np.nonzero(roi_cen[:, 0] > x_cen) # Parcels on left side of brain    

@@ -1,13 +1,12 @@
 % Integrating resting state connectivity into task activation detection
 clear all; 
-% close all;
+close all;
 localpath = '/volatile/bernardng/';
 netwpath = '/home/bn228083/';
 addpath(genpath([netwpath,'matlabToolboxes/general/']));
 addpath(genpath([netwpath,'matlabToolboxes/nifti/']));
 addpath(genpath([netwpath,'code/covarianceEstimationBN/']));
-addpath(genpath([netwpath,'toolboxes/markSchmidtCode/']));
-addpath([netwpath,'code/bayesianRegressionBN/']);
+addpath(genpath([netwpath,'code/bayesianRegressionBN/']));
 fid = fopen([localpath,'data/imagen/subjectLists/subjectListDWI.txt']);
 nSubs = 60;
 sublist = cell(nSubs,1);
@@ -16,7 +15,7 @@ for i = 1:nSubs
 end
 nConds = 10; % 10 experimental conditions
 
-method = 5; 
+method = 2; 
 
 % Parameters
 if method == 1
@@ -26,16 +25,18 @@ elseif method == 2
 elseif method == 3
     methName = 'OAS';
 elseif method == 4
-    methName = 'GL';
+    methName = 'SGGM';
 elseif method == 5
-    methName = 'WGL';
+    methName = 'WSGGM';
+elseif method == 6;
+    methName = 'DWI';
+elseif method == 7
+    methName = 'sketch';
 end
 thresh = 0:0.25:100; % For thresholding the t-maps
 
 % Load ROI template
-% nii = load_nii([localpath,'/templates/freesurfer/cort_subcort_333.nii']);
-% template = nii.img; clear nii;
-template = load([localpath,'data/imagen/group/parcel500refined.mat']);
+template = load([localpath,'data/imagen/group/fs_parcel500.mat']);
 rois = unique(template.template);
 nROIs = length(rois)-1; % Skipping background
 clear template;
@@ -44,8 +45,8 @@ clear template;
 beta = zeros(nConds,nROIs,nSubs);
 for sub = 1:nSubs
     % Load task data
-    load([localpath,'data/imagen/',sublist{sub},'/gcafMRI/tc_task_parcel500.mat']);
-    tcTask = tc_parcel; clear tc_parcel;
+    load([localpath,'data/imagen/',sublist{sub},'/gcafMRI/tc_fs_parcel500.mat']);
+    tcTask = tc; clear tc;
     % Normalizing the time courses
     tcTask = tcTask-ones(size(tcTask,1),1)*mean(tcTask);
     tcTask = tcTask./(ones(size(tcTask,1),1)*std(tcTask));
@@ -67,8 +68,8 @@ for sub = 1:nSubs
         L = eye(nROIs); % Using identity to test effect of just ridge penalty
         beta(:,:,sub) = bayesianRegression(X,Y,L)';
     elseif method == 3 % OAS
-        load([localpath,'/data/imagen/',sublist{sub},'/restfMRI/tc_rest_parcel500.mat']);
-        tcRest = tc_parcel; clear tc_parcel;
+        load([localpath,'/data/imagen/',sublist{sub},'/restfMRI/tc_parcel500.mat']);
+        tcRest = tc; clear tc;
         tcRest = tcRest-ones(size(tcRest,1),1)*mean(tcRest);
         tcRest = tcRest./(ones(size(tcRest,1),1)*std(tcRest));
         % Insert random signal for zero time courses
@@ -78,24 +79,41 @@ for sub = 1:nSubs
         end
         L = inv(oas(tcRest));
         beta(:,:,sub) = bayesianRegression(X,Y,L)';
-    elseif method == 4 % Graphical LASSO
-        load([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_rest_parcel500_quic335_cv.mat']);
+    elseif method == 4 % Sparse Gaussian graphical model
+        load([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_fs_parcel500_quic335_cv.mat']);
         L = Krest; clear Krest;
         beta(:,:,sub) = bayesianRegression(X,Y,L)';
-    elseif method == 5 % Weighted Graphical LASSO
-        load([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_rest_anatDenseBin_parcel500_quic335_cv.mat']);
-        L = Krest; clear K_rest;
+    elseif method == 5 % Weighted sparse Gaussian graphical model
+        load([localpath,'data/imagen/',sublist{sub},'/multimodalConn/K_fibcnt_fs_parcel500_quic3355_cv.mat']);
+        L = K; clear K;
         beta(:,:,sub) = bayesianRegression(X,Y,L)';        
+    elseif method == 6 % Anatomical connectivity as prior
+        load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ukf/K_fs_parcel500.mat']);
+        L = diag(sum(Kfibcnt))-Kfibcnt;
+        beta(:,:,sub) = bayesianRegression(X,Y,L)';
+    elseif method == 7 % Sketch of connectivity pattern as prior
+        load([localpath,'data/imagen/',sublist{sub},'/restfMRI/tc_parcel500.mat']);
+        tcRest = tc; clear tc;
+        tcRest = tcRest-ones(size(tcRest,1),1)*mean(tcRest);
+        tcRest = tcRest./(ones(size(tcRest,1),1)*std(tcRest));
+        % Insert random signal for zero time courses
+        indNan = isnan(tcRest);
+        if sum(indNan(:))~=0
+            tcRest(indNan) = randn(sum(indNan(:)),1);
+        end
+        load([localpath,'data/imagen/group/graph_adjacent_fs_parcel500.mat']);
+        load([localpath,'data/imagen/group/graph_bilateral_fs_parcel500.mat']);
+        L = genSynthPrec(tcRest,A,B);
+        beta(:,:,sub) = bayesianRegression(X,Y,L)';
     end
     disp(['Subject',int2str(sub),' beta computed']);
 end
 
 % Compute t-value of beta contrast
-load([localpath,'data/imagen/contrastList.mat']);
-% sig = maxTpermTestGroup(beta,contrastList(9:12,:),thresh);
-sig = maxTpermTestGroup(beta,contrastList,thresh,20000);
+load([localpath,'data/imagen/group/contrastList.mat']);
+sig = maxTpermTestGroup(beta,contrastList,thresh,10000);
 % Saving contrast of interest results
-% save(['sig',methName],'sig');
+% save(['sig',methName,'_fs_parcel500.mat'],'sig');
 
 
 

@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 import nibabel as nib
 from nipy.labs import as_volume_img
-from scipy.ndimage.morphology import binary_closing
+from scipy.ndimage.morphology import binary_dilation
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Binarize tissue mask based on user-defined threshold (-t 0.33.')
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     afile = afile.replace('.nii', '_bin.nii')
     vol_img = as_volume_img(filepath)
     vol = vol_img.get_data() > thresh
-    vol = binary_closing(vol, structure=np.ones((3, 3, 3))).astype(np.uint8)
+    vol = binary_dilation(vol, structure=np.ones((3, 3, 3))).astype(np.uint8)
     nii = nib.Nifti1Image(vol, vol_img.affine)
     nib.save(nii, os.path.join(path, afile))
 

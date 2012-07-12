@@ -17,12 +17,12 @@ kFolds = 3; % Number of cross-validation folds
 nLevels = 3; % Number of refinements on lambda grid
 nGridPts = 5; % Number of grid points for lambda, need to be odd number
 
-nROIs = 502; % Number of parcels
-K = zeros(nROIs,nROIs,length(subs));
+nROIs = 492; % Number of parcels
+Kacc = zeros(nROIs,nROIs,length(subs));
 lambda = zeros(length(subs),1);
-matlabpool(7);
-% for sub = subs
-parfor sub = 1:nSubs
+% matlabpool(7);
+for sub = subs
+% parfor sub = 1:nSubs
     if dataType == 1 % Load rest data
         tc = load([localpath,'data/imagen/',sublist{sub},'/restfMRI/tc_fs_parcel500.mat']);
         Y = tc.tc;
@@ -44,13 +44,13 @@ parfor sub = 1:nSubs
     end
     
     % Sparse Inverse Covariance Estimation
-    [K(:,:,sub),lambda(sub)] = sggmCV(Y,kFolds,nLevels,nGridPts);
+    [Kacc(:,:,sub),lambda(sub)] = sggmCV(Y,kFolds,nLevels,nGridPts);
     disp(['Done subject',int2str(sub)]);
 end
-matlabpool('close');
+% matlabpool('close');
 
 for sub = 1:nSubs
-    Krest = K(:,:,sub);
+    K = Kacc(:,:,sub);
     lambdaBest = lambda(sub);
-    save([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_fs_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),'_cv.mat'],'Krest','lambdaBest');
+    save([localpath,'data/imagen/',sublist{sub},'/restfMRI/K_fs_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),'_cv.mat'],'K','lambdaBest');
 end

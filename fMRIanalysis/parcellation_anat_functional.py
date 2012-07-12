@@ -23,7 +23,7 @@ ANAT_DIR = "/volatile/bernardng/templates/freesurfer/cort_subcort_333.nii"
 
 # Concatenating PCA-ed voxel timecourses across subjects
 for sub in subList:
-    tc = io.loadmat(os.path.join(BASE_DIR, sub, "restfMRI/tc_rest_vox.mat"))
+    tc = io.loadmat(os.path.join(BASE_DIR, sub, "restfMRI/tc_vox.mat"))
     tc = tc["tc"]
     pca = PCA(n_components=10)    
     pca.fit(tc.T)
@@ -55,7 +55,7 @@ n_vox = np.sum(brain != 0) # Number of voxels within ROIs in Freesurfer template
 tc_group = tc_group.reshape((dim[0], dim[1], dim[2], -1))
 n_tpts = tc_group.shape[-1]
 for t in np.arange(n_tpts):
-    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=1.5)
+    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=2.5)
 tc_group = tc_group.reshape((-1, n_tpts))
 
 # Perform parcellation on smoothed PCA-ed timecourses for each ROI
@@ -84,7 +84,7 @@ label = np.unique(template)
 for sub in subList:
     print str("Subject" + sub)
     # Load preprocessed voxel timecourses    
-    tc = io.loadmat(os.path.join(BASE_DIR, sub, "restfMRI/tc_rest_vox.mat"))
+    tc = io.loadmat(os.path.join(BASE_DIR, sub, "restfMRI/tc_vox.mat"))
     tc = tc["tc"]
    
     # Generate subject-specific tissue mask
@@ -114,7 +114,7 @@ for sub in subList:
     for i in np.arange(label.shape[0] - 1): # Skipping background
         ind = (template == label[i + 1]) & (tissue_mask == 1)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
-        if np.sum(tc_parcel[:, i]) == 0:
+        if np.sum(tc_parcel[:, i]) == 0 or np.sum(ind) < 10:
             template_refined[template == label[i + 1]] = 0
 template_refined = template_refined.reshape([dim[0], dim[1], dim[2]])
 

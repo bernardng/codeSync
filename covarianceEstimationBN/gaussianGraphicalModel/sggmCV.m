@@ -35,6 +35,7 @@ for i = 1:nLevels
     scaleGridMod = sort([scaleGrid(setdiff(1:length(scaleGrid),ind)),scaleBest],2,'descend'); % Remove computed scales
     scaleAcc = [scaleAcc,scaleGridMod]; % Store computed scales
     evid = -inf*ones(length(scaleGridMod),kFolds);
+    % Cross validation to set sparsity level
     for k = 1:kFolds
         Xtrain = X(trainInd{k},:);
         Xtest = X(testInd{k},:);
@@ -43,6 +44,7 @@ for i = 1:nLevels
         K = QUIC('path',Strain,lambdaMax*~eye(d),scaleGridMod,1e-9,2,200);
         for j = 1:length(scaleGridMod)
             dg = dualGap(K(:,:,j),Strain,lambdaMax*scaleGridMod(j)*~eye(d))
+            % Check convergence
             if dg < 1e-5
                 evid(j,k) = logDataLikelihood(Stest,K(:,:,j));
             else

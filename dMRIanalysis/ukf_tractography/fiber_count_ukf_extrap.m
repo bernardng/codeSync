@@ -1,23 +1,22 @@
 % Count the #fibers going between each pair of parcels in a template
-% Input:    nSteps = #steps along tangent to extrapolate, e.g. 2mm resolution, 5 steps = 1cm
+% Input:    nSteps = #steps along tangent to extrapolate, e.g. 2mm resolution, 5 steps = 1cm, 
+%           but best to not extrapolate, i.e. set to 0
 %           templatePath = filepath to template
-%           gmPath = filepath to grey matter mask
-%           wmPath = filepath to white matter mask
-%           csfPath = filepath to CSF mask
 %           fiberPath = filepath to fiber
 %           connPath = filepath to save fiber count
 % Output:   Kanat = fiber count matrix
 % Notes:    Fiber endpoints extrapolated along tangent direction if not on
 %           grey matter voxels
-function Kanat = fiber_count_ukf(nSteps,templatePath,gmPath,wmPath,csfPath,fiberPath,connPath)
+function [Kfibcnt,Kfiblen,parcelVol] = fiber_count_ukf_extrap(nSteps,templatePath,fiberPath,connPath)
 addpath(genpath('/home/bn228083/code/dMRIanalysis/'));
 
 % Load parcel template
-nii = load_nii(templatePath);
+nii = load_untouch_nii(templatePath);
 rois = unique(nii.img);
 rois(1) = []; % Remove background
 nROIs = length(rois);
-Kanat = zeros(nROIs,nROIs);
+Kfibcnt = zeros(nROIs,nROIs);
+Kfiblen = zeros(nROIs,nROIs);
 
 % Load template in DWI space
 nii = load_untouch_nii(templatePath);
@@ -26,21 +25,7 @@ matrixdim = nii.hdr.dime.dim(2:4);
 voxdim = nii.hdr.dime.pixdim(2:4);
 [sx,sy,sz] = size(template);
 % Compute transform from world space to index space
-affineToIndexT = inv([nii.hdr.hist.srow_x;nii.hdr.hist.srow_y;nii.hdr.hist.srow_z;0 0 0 1]);
-
-% Remove subject specific non-gray matter voxels from template
-nii = load_untouch_nii(gmPath); gmMask = nii.img;
-nii = load_untouch_nii(wmPath); wmMask = nii.img;
-nii = load_untouch_nii(csfPath); csfMask = nii.img;
-probTotal = gmMask+wmMask+csfMask;
-ind = probTotal>0; % Account for voxels with unspecified tissue type
-gmMask(ind) = gmMask(ind)./probTotal(ind);
-wmMask(ind) = wmMask(ind)./probTotal(ind);
-csfMask(ind) = csfMask(ind)./probTotal(ind);
-tissueMask = [gmMask(:),wmMask(:),csfMask(:)];
-[~,tissue] = max(tissueMask,[],2);
-tissue(probTotal==0) = 0; % To remove voxels with unknown tissue type
-template(tissue~=1) = 0;
+% affineToIndexT = inv([nii.hdr.hist.srow_x;nii.hdr.hist.srow_y;nii.hdr.hist.srow_z;0 0 0 1]);
 
 % Load fiber
 fiber = read_fiber(fiberPath,matrixdim,voxdim);
@@ -49,21 +34,11 @@ nFiber = length(fiber.fiber);
 % Fiber count computation
 for n = 1:nFiber
     % This setting is valid for UKF tractography only
-    i = fiber.fiber(n).xyzFiberCoord(:,2);
-    j = fiber.fiber(n).xyzFiberCoord(:,3);
+    i = fiber.fiber(n).xyzFiberCoord(:,3);
+    j = fiber.fiber(n).xyzFiberCoord(:,2);
     k = fiber.fiber(n).xyzFiberCoord(:,1);
     ijk = [i';j';k'];
-    
-    
-    fiber.fiber(n).xyzFiberCoord = round(ijk')+1;
-        
-    
-%         x = -fiber.fiber(n).xyzFiberCoord(:,1);
-%         y = -fiber.fiber(n).xyzFiberCoord(:,2);
-%         z = fiber.fiber(n).xyzFiberCoord(:,3);
-%         ijk = affineToIndexT*[x';y';z';ones(1,length(x))];
-%         fiber.fiber(n).xyzFiberCoord = [ijk(2,:)',ijk(1,:)',ijk(3,:)'];
-
+    fiber.fiber(n).xyzFiberCoord = round([ijk(2,:)',ijk(1,:)',ijk(3,:)'])+1;
 
     % Convert indices to numbers 
     I = round(ijk(1,:)) + 1; % +1 to account for MATLAB indexing convention
@@ -113,7 +88,7 @@ for n = 1:nFiber
         if labelEnd == 0
             tangent = [ijk(1,end)-ijk(1,end-1);ijk(2,end)-ijk(2,end-1);ijk(3,end)-ijk(3,end-1)];
             tangent = tangent/norm(tangent);
-            for s = 1:nSteps
+            for s = 1:nSteps     
                 % Check positive tangent direction
                 i = round(ijk(1,end)+s*tangent(1)) + 1; % +1 to account for MATLAB indexing convention
                 j = round(ijk(2,end)+s*tangent(2)) + 1;
@@ -141,21 +116,27 @@ for n = 1:nFiber
             end
         end
         if labelEnd ~= 0
-            Kanat(rois==labelStart,rois==labelEnd) = Kanat(rois==labelStart,rois==labelEnd)+1;
-            Kanat(rois==labelEnd,rois==labelStart) = Kanat(rois==labelEnd,rois==labelStart)+1;
+            Kfibcnt(rois==labelStart,rois==labelEnd) = Kfibcnt(rois==labelStart,rois==labelEnd)+1;
+            Kfibcnt(rois==labelEnd,rois==labelStart) = Kfibcnt(rois==labelEnd,rois==labelStart)+1;
+            Kfiblen(rois==labelStart,rois==labelEnd) = Kfiblen(rois==labelStart,rois==labelEnd)+fiber.fiber(n).nFiberLength;
+            Kfiblen(rois==labelEnd,rois==labelStart) = Kfiblen(rois==labelEnd,rois==labelStart)+fiber.fiber(n).nFiberLength;
         end
     end
 end
 
-% Plotting volume
-slice = round(matrixdim(3)/2); % Display center axial slice
-figure;
-surf([1 matrixdim(1)],[1 matrixdim(2)],repmat(slice,[2 2]),uint8(template(:,:,slice)),'facecolor','texture');
-hold on; 
-display_fiber(fiber,1:20:nFiber,'default',0,0,'-');
+% Compute volume of each pair of parcels
+ind = Kfibcnt~=0;
+[i,j] = ind2sub(size(Kfibcnt),find(ind));
+parcelVol = zeros(nROIs,nROIs);
+for k = 1:length(i)
+    parcelVol(i(k),j(k)) = sum(template(:)==i(k))+sum(template(:)==j(k));
+end
 
+% Compute average fiber length
+Kavefiblen = zeros(size(Kfibcnt));
+Kavefiblen(ind) = Kfiblen(ind)./Kfibcnt(ind);
+Kfiblen = Kavefiblen;
 
-
-if nargin == 7
-    save(connPath,'Kanat');
+if nargin == 4
+    save(connPath,'Kfibcnt','Kfiblen','parcelVol');
 end
