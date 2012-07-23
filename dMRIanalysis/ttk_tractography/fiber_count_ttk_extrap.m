@@ -9,7 +9,7 @@
 %           parcelVol = sum of volumes of the connected parcels
 % Notes:    Fiber endpoints extrapolated along tangent direction if not on
 %           grey matter voxels
-function [Kfibcnt,Kfiblen,parcelVol] = fiber_count_ukf_extrap(nSteps,templatePath,fiberPath,connPath)
+function [Kfibcnt,Kfiblen,parcelVol] = fiber_count_ttk_extrap(nSteps,templatePath,fiberPath,connPath)
 addpath(genpath('/home/bn228083/code/dMRIanalysis/'));
 
 % Load parcel template
@@ -27,7 +27,7 @@ matrixdim = nii.hdr.dime.dim(2:4);
 voxdim = nii.hdr.dime.pixdim(2:4);
 [sx,sy,sz] = size(template);
 % Compute transform from world space to index space
-% affineToIndexT = inv([nii.hdr.hist.srow_x;nii.hdr.hist.srow_y;nii.hdr.hist.srow_z;0 0 0 1]);
+affineToIndexT = inv([nii.hdr.hist.srow_x;nii.hdr.hist.srow_y;nii.hdr.hist.srow_z;0 0 0 1]);
 
 % Load fiber
 fiber = read_fiber(fiberPath,matrixdim,voxdim);
@@ -36,12 +36,12 @@ nFiber = length(fiber.fiber);
 % Fiber count computation
 for n = 1:nFiber
     % This setting is valid for UKF tractography only
-    i = fiber.fiber(n).xyzFiberCoord(:,3);
-    j = fiber.fiber(n).xyzFiberCoord(:,2);
-    k = fiber.fiber(n).xyzFiberCoord(:,1);
-    ijk = [i';j';k'];
-%     fiber.fiber(n).xyzFiberCoord = round([ijk(2,:)',ijk(1,:)',ijk(3,:)'])+1;
-
+    x = -fiber.fiber(n).xyzFiberCoord(:,1);
+    y = -fiber.fiber(n).xyzFiberCoord(:,2);
+    z = fiber.fiber(n).xyzFiberCoord(:,3);
+    ijk = affineToIndexT*[x';y';z';ones(1,length(x))];
+%     fiber.fiber(n).xyzFiberCoord = [ijk(2,:)'+1,ijk(1,:)'+1,ijk(3,:)'+1];
+    
     % Convert indices to numbers 
     I = round(ijk(1,:)) + 1; % +1 to account for MATLAB indexing convention
     J = round(ijk(2,:)) + 1;

@@ -9,7 +9,7 @@ nSubs = 60;
 for i = 1:nSubs
     sublist{i} = fgetl(fid);
 end
-subs = 31:40; 
+subs = 9:10; 
 
 % Parameters
 dataType = 1; % 1 = rest, 2 = task
@@ -18,7 +18,7 @@ nLevels = 3; % Number of refinements on lambda grid
 nGridPts = 5; % Number of grid points for lambda, need to be odd number
 nWt = 5; % Number of sigma in exp(-Kanat/sigma) for weighting |Kij|
 
-nROIs = 502; % Number of parcels
+nROIs = 492; % Number of parcels
 Kacc = zeros(nROIs,nROIs,length(subs));
 lambda = zeros(length(subs),1);
 sigma = zeros(length(subs),1);
@@ -33,7 +33,7 @@ for sub = subs
         Y = tc.tc;
     end
     % Load anatomical connectivity estimates
-    Kanat = load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ukf/K_fs_parcel500.mat']);
+    Kanat = load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ttk/K_gaussian_blur_fs_parcel500.mat']);
     Kanat = Kanat.Kfibcnt;
     
     % Skipping first time point so that timecourses can be evenly divided into 3 folds
@@ -51,16 +51,25 @@ for sub = subs
     
     % Sparse Inverse Covariance Estimation
     [Kacc(:,:,sub),lambda(sub),sigma(sub)] = wsggmCV(Y,kFolds,nLevels,nGridPts,Kanat,nWt);
+    
+    
+    % Safer than using parallel processing
+    K = Kacc(:,:,sub);
+    lambdaBest = lambda(sub);
+    sigmaBest = sigma(sub);
+    save([localpath,'data/imagen/',sublist{sub},'/multimodalConn/results_ttk/K_fibcnt_gaussian_blur_fs_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),int2str(nWt),'_cv.mat'],'K','lambdaBest','sigmaBest');
+    
+    
     disp(['Done subject',int2str(sub)]);
 end
 % matlabpool('close');
 
-for sub = subs
-    K = Kacc(:,:,sub);
-    lambdaBest = lambda(sub);
-    sigmaBest = sigma(sub);
-    save([localpath,'data/imagen/',sublist{sub},'/multimodalConn/results_ukf/K_fibcnt_fs_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),int2str(nWt),'_cv.mat'],'K','lambdaBest','sigmaBest');
-end
+% for sub = subs
+%     K = Kacc(:,:,sub);
+%     lambdaBest = lambda(sub);
+%     sigmaBest = sigma(sub);
+%     save([localpath,'data/imagen/',sublist{sub},'/multimodalConn/results_ukf/K_fibcnt_fs_parcel500_quic',int2str(kFolds),int2str(nLevels),int2str(nGridPts),int2str(nWt),'_cv.mat'],'K','lambdaBest','sigmaBest');
+% end
     
 
 

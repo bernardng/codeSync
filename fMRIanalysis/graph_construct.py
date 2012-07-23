@@ -41,7 +41,7 @@ if __name__ == '__main__':
         graph_bilateral[:, :, n] = (graph_bilateral[:, :, n] + graph_bilateral[:, :, n].T) # Symmeterization
         if n > 0:        
             graph_bilateral[:, :, n] += np.sum(graph_bilateral[:, :, 0:n], axis=2)
-        graph_bilateral = graph_bilateral > 0
+        graph_bilateral = np.float64(graph_bilateral > 0)
     # Save bilateral connection matrix    
     io.savemat(os.path.join(path, 'graph_bilateral_' + afile), {"B": graph_bilateral})
     
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         # Put 1 in adjacency matrix for ROIs that the diated mask intersect
         graph_adjacent[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, -1)))] = 1 # -1 to account for background removal
     graph_adjacent = (graph_adjacent + graph_adjacent.T) > 0 # Symmeterization
-    graph_adjacent = graph_adjacent * (1 - graph_bilateral[:, :, -1])
+    graph_adjacent = np.float64(graph_adjacent * (1 - graph_bilateral[:, :, -1]))
     # Save adjacency matrix    
     io.savemat(os.path.join(path, 'graph_adjacent_' + afile), {"A": graph_adjacent})
     
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         mask = binary_dilation(template == rois[nr], structure=np.ones((2, 2, 2)))
         # Put 1 in adjacency matrix for ROIs that the diated mask intersect
         graph_left_ipsi[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, rois[ind_right[0]] - 1, -1)))] = 1 # -1 to account for background removal
-    graph_left_ipsi = (graph_left_ipsi + graph_left_ipsi.T) > 0 # Symmeterization
+    graph_left_ipsi = np.float64((graph_left_ipsi + graph_left_ipsi.T) > 0) # Symmeterization
     # Save left ipsilater connection matrix    
     io.savemat(os.path.join(path, 'graph_left_ipsi_' + afile), {"L": graph_left_ipsi})
     
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         mask = binary_dilation(template == rois[nr], structure=np.ones((2, 2, 2)))
         # Put 1 in adjacency matrix for ROIs that the diated mask intersect
         graph_right_ipsi[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, rois[ind_left[0]] - 1, -1)))] = 1 # -1 to account for background removal
-    graph_right_ipsi = (graph_right_ipsi + graph_right_ipsi.T) > 0 # Symmeterization
+    graph_right_ipsi = np.float64((graph_right_ipsi + graph_right_ipsi.T) > 0) # Symmeterization
     # Save right ipsilater connection matrix    
     io.savemat(os.path.join(path, 'graph_right_ipsi_' + afile), {"R": graph_right_ipsi})
 

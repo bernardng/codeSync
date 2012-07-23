@@ -1,4 +1,4 @@
-function H = displayFiber(tracts,selection,colorStyle,showStartEnd,realXYZ,lineStyle)
+function H = display_fiber(tracts,selection,colorStyle,showStartEnd,realXYZ,lineStyle)
 % ------------------------------------------------------
 %   H = tracTubes_DTIstudio_selection(tracts,selection,colorStyle,showStartEnd,realXYZ,lineStyle);
 % ------------------------------------------------------

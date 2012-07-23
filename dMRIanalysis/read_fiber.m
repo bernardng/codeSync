@@ -1,4 +1,4 @@
-function tracts = readFiber(filename,matrixdim,voxdim)
+function tracts = read_fiber(filename,matrixdim,voxdim)
 %
 % function f_readFiber_vtk_bin(filename,matrixdim,voxdim)
 %

@@ -35,12 +35,16 @@ gunzip -f fs_parcel500_aff.nii.gz
 fsl4.1-flirt -in wmMask_rs.nii -ref dwi_ecc_ave_ss.nii -applyxfm -init mni3mmtodwi_aff.txt -out wmMask_rs_aff.nii
 gunzip -f wmMask_rs_aff.nii.gz
 
+# Binarize the WM mask
+python $script_path/gen_bin_mask.py -i wmMask_rs_aff.nii -t 0.3
+
 # Move results to alignment folder
 mkdir -p alignment
 mv res*.nii alignment
 mv dwi_ecc_*.nii alignment
 mv *Mas*.nii alignment
 mv alignment/*Mask_rs_aff.nii .
+mv alignment/*Mask_rs_aff_bin.nii .
 mv fs_parcel50*.nii alignment
 mv alignment/fs_parcel500_aff.nii .
 mv mni3mmtodwi_aff.txt alignment

@@ -50,6 +50,13 @@ gunzip -f fs_parcel500_aff.nii.gz
 fsl4.1-flirt -in wmMask_rs.nii -ref dwi_ecc_ave_ss.nii -applyxfm -init mni3mmtodwi_aff.txt -out wmMask_rs_aff.nii
 gunzip -f wmMask_rs_aff.nii.gz
 
+6. Binarize probabilistic white matter template to generate a mask
+
+python $script_path/gen_bin_mask.py -i wmMask_rs_aff.nii -t 0.3
+
+- Morphological dilation is applied to the thresholded WM mask to allow fibers to end in grey matter voxels
+- Output saved as wmMask_rs_aff_bin.nii of type uint8
+
 
 
 
