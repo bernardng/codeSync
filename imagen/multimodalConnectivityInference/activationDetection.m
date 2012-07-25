@@ -8,6 +8,7 @@ addpath(genpath([netwpath,'matlabToolboxes/nifti/']));
 addpath(genpath([netwpath,'code/covarianceEstimationBN/']));
 addpath(genpath([netwpath,'code/bayesianRegressionBN/']));
 addpath(genpath([netwpath,'code/fMRIanalysis']));
+addpath(genpath([netwpath,'code/dMRIanalysis']));
 fid = fopen([localpath,'data/imagen/subjectLists/subjectListDWI.txt']);
 nSubs = 60;
 sublist = cell(nSubs,1);
@@ -16,7 +17,7 @@ for i = 1:nSubs
 end
 nConds = 10; % 10 experimental conditions
 
-method = 6; 
+method = 5; 
 
 % Parameters
 if method == 1
@@ -32,7 +33,9 @@ elseif method == 5
 elseif method == 6
     methName = 'DWI';
 elseif method == 7
-    methName = 'sketch';
+    methName = 'RegDWI';
+elseif method == 8
+    methName = 'Sketch';
 end
 thresh = 0:0.25:100; % For thresholding the t-maps
 
@@ -91,12 +94,21 @@ for sub = 1:nSubs
     elseif method == 6 % Anatomical connectivity as prior
         load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ttk/K_gaussian_blur_fs_parcel500.mat']);
         L = diag(sum(Kfibcnt))-Kfibcnt;
-        
-        load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ukf/K_gaussian_blur_fs_parcel500.mat']);
-        L = L + diag(sum(Kfibcnt))-Kfibcnt;
-        
         beta(:,:,sub) = bayesianRegression(X,Y,L)';
-    elseif method == 7 % Sketch of connectivity pattern as prior
+    elseif method == 7 % Find anatomical connectivity prior that maximizes RS-fMRI data likelihood
+        load([localpath,'data/imagen/',sublist{sub},'/restfMRI/tc_fs_parcel500.mat']);
+        tcRest = tc; clear tc;
+        tcRest = tcRest-ones(size(tcRest,1),1)*mean(tcRest);
+        tcRest = tcRest./(ones(size(tcRest,1),1)*std(tcRest));
+        % Insert random signal for zero time courses
+        indNan = isnan(tcRest);
+        if sum(indNan(:))~=0
+            tcRest(indNan) = randn(sum(indNan(:)),1);
+        end
+        load([localpath,'data/imagen/',sublist{sub},'/dwi/results_ttk/K_gaussian_blur_fs_parcel500.mat']);
+        L = regularizeAnatConn(tcRest,Kfibcnt);
+        beta(:,:,sub) = bayesianRegression(X,Y,L)';
+    elseif method == 8 % Sketch of connectivity pattern as prior
         load([localpath,'data/imagen/',sublist{sub},'/restfMRI/tc_fs_parcel500.mat']);
         tcRest = tc; clear tc;
         tcRest = tcRest-ones(size(tcRest,1),1)*mean(tcRest);
@@ -108,7 +120,6 @@ for sub = 1:nSubs
         end
         load([localpath,'data/imagen/group/graph_adjacent_fs_parcel500.mat']);
         load([localpath,'data/imagen/group/graph_bilateral_fs_parcel500.mat']);
-        A = double(A); B = double(B);
         L = genSynthPrec(tcRest,A,B);
         beta(:,:,sub) = bayesianRegression(X,Y,L)';
     end
