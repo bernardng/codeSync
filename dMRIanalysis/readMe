@@ -1,7 +1,4 @@
-mention need to add dMRIanalysis to ~./bashrc
-mention the different files in dMRIanalysis
-
-order
-1. preproc
-2. alignment
-3. tractography
+Procedures
+-----------------
+1. Follow instructions in preprocess.txt.
+2. Choose ttk or ukf and follow instructions in *tractography.txt

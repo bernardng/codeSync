@@ -35,7 +35,7 @@ nFiber = length(fiber.fiber);
 
 % Fiber count computation
 for n = 1:nFiber
-    % This setting is valid for UKF tractography only
+    % This setting is valid for TTK tractography only
     x = -fiber.fiber(n).xyzFiberCoord(:,1);
     y = -fiber.fiber(n).xyzFiberCoord(:,2);
     z = fiber.fiber(n).xyzFiberCoord(:,3);

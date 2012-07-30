@@ -1,6 +1,10 @@
 """
 Functional Parcellation for IMAGEN data
-Notes: Requires folder structure described in readMe.txt
+Input:	n_parcels = #parcels to divide the brain
+	BASE_DIR = location where data are stored
+	subList = subject#'s
+	ANAT_DIR = location of anatomical template
+Notes:	Requires folder structure described in readMe.txt
 """
 import os
 import numpy as np

@@ -137,9 +137,9 @@ def createNrrd(nifti, header, bval, bvecs):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Enter location of DWI, bval, and bvec files')
-    parser.add_argument('-i', dest='dwi_file')
-    parser.add_argument('-bval', dest='bval_file')
-    parser.add_argument('-bvec', dest='bvec_file')
+    parser.add_argument('-i', dest='dwi_file') # Take .nii as input
+    parser.add_argument('-bval', dest='bval_file') # bval.bval as a row of b-values
+    parser.add_argument('-bvec', dest='bvec_file') # bvec.bvec with three rows [gx;gy;gz]
     dwi_file = parser.parse_args().dwi_file
     bval_file = parser.parse_args().bval_file
     bvec_file = parser.parse_args().bvec_file

@@ -7,7 +7,7 @@ from scipy.ndimage.morphology import binary_dilation
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Binarize tissue mask based on user-defined threshold (-t 0.33.')
-    parser.add_argument('-i', dest='filename')
+    parser.add_argument('-i', dest='filename') # Take .nii as input
     parser.add_argument('-t', dest='threshold', default=0.33)
     filepath = parser.parse_args().filename
     thresh = np.float32(parser.parse_args().threshold)

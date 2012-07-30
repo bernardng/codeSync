@@ -6,7 +6,7 @@ from nipy.labs import as_volume_img
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert data to uint8 (-t 0), int16 (-t 1), int32 (-t 2).')
-    parser.add_argument('-i', dest='filename')
+    parser.add_argument('-i', dest='filename') # Take .nii as input
     parser.add_argument('-t', dest='filetype')
     filepath = parser.parse_args().filename
     input_type = np.float32(parser.parse_args().filetype)

@@ -1,5 +1,8 @@
 """
 Functional Parcellation for IMAGEN data
+Input:	n_parcels = #parcels to divide the brain
+	BASE_DIR = location where data are stored
+	subList = subject#'s
 Notes: Requires folder structure described in readMe.txt
 """
 import os

@@ -1,0 +1,20 @@
+0. Create the following folder structure:
+
+.../data/imagen/subject#/
+.../data/imagen/subject#/anat/
+.../data/imagen/subject#/dwi/
+.../data/imagen/subject#/facesfMRI/
+.../data/imagen/subject#/gcafMRI/
+.../data/imagen/subject#/multimodalConn/
+.../data/imagen/subject#/restfMRI/
+.../data/imagen/group/
+.../data/imagen/subjectLists/
+
+1. Perform fMRI preprocessing by running fMRIanalysis/preprocess.py
+2. Perform parcellation by running fMRIanalysis/parcellation_*.py
+3. Generate parcel time courses by running fMRIanalysis/gen_tc_parcel.py
+4. Perform activation detection by using code in bayesianRegressionBN and covarianceEstimationBN
+5. Perform DWI preprocessing by running dMRIanalysis/preprocess.txt
+6. Perform EPItoDWI alignment by running fMRI2dMRIalignment/alignment.txt
+7. Perform tractography by running dMRIanalysis/*_tractography/*_tractography.txt
+8. Perform multimodal connectivity estimation by using code in covarianceEstimationBN/gaussianGraphicalModel

@@ -76,7 +76,7 @@ def createNrrd(nifti, header):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-i', '--input', dest='files', nargs='+', required=True, help='enter the name of the nifti files to be converted')
+    parser.add_argument('-i', '--input', dest='files', nargs='+', required=True, help='enter the name of the nifti files to be converted') # Takes .nii as input
     args = parser.parse_args()
 
     for nifti in args.files:

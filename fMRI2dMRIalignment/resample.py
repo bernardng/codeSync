@@ -9,7 +9,7 @@ from nipy.labs import as_volume_img
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Resample input volume to resolution of reference (-t 0 = continuous interpolation; -t 1 = nearest neighbor')
-    parser.add_argument('-i', dest='input')
+    parser.add_argument('-i', dest='input') # Takes .nii as input
     parser.add_argument('-r', dest='reference')
     parser.add_argument('-t', dest='interp_type', default=0)
     input_path = parser.parse_args().input

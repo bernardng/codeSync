@@ -4,7 +4,7 @@
 %           B = dxd bilateral connection matrix
 % Output:   K = gamma(1)(I - gamma(2) * (A + B))
 %           Find K that minimizes neg log data likelihood assuming Gaussian
-function K = genSynthPrec(tc,A,B)
+function K = gen_synth_prec(tc,A,B)
 addpath(genpath('/home/bn228083/matlabToolboxes/markSchmidtCode/'));
 [n,d] = size(tc);
 S = corr(tc);

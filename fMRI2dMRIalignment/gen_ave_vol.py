@@ -9,7 +9,7 @@ from nipy.labs import as_volume_img
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute average of a 4D volume.')
-    parser.add_argument('-i', dest='filename')
+    parser.add_argument('-i', dest='filename') # Takes .nii as input
     filepath = parser.parse_args().filename
     path, afile = os.path.split(filepath)
     afile = afile.replace('.nii', '_ave.nii')

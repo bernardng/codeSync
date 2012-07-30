@@ -1,14 +1,17 @@
-clean up later!!!
+Required folder structure
+----------------------------
 
-
-- blah requires a folder structure. For example, given data from imagen database
+Below is an example for the IMAGEN database
 
 .../data/imagen/subject#/
 .../data/imagen/subject#/anat/
 .../data/imagen/subject#/dwi/
 .../data/imagen/subject#/facesfMRI/
 .../data/imagen/subject#/gcafMRI/
+.../data/imagen/subject#/multimodalConn/
 .../data/imagen/subject#/restfMRI/
+.../data/imagen/group/
+.../data/imagen/subjectLists/
 
 
-spm8batch.m is a sample script for batch SPM8 preprocessing
+

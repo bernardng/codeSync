@@ -4,7 +4,7 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert rows in input file to columns.')
-    parser.add_argument('-i', dest='input_file')
+    parser.add_argument('-i', dest='input_file') # e.g. bvec.bvec with three rows of [gx;gy;gz] or bval.bval with a row of b-values
     parser.add_argument('-o', dest='output_file')
     parser.add_argument('-d', dest='num_dec')
     input_path = parser.parse_args().input_file
