@@ -5,3 +5,5 @@ Notes
 - logDataLikelihood.m = computes log data likelihood of GGM
 - sggmCV.m = sparse inverse covariance estimation using QUIC with lambda data-drivenly selected through cross validation
 - wsggmCV.m = sparse inverse covariance estimation using QUIC with different amount of sparse penalization on each edge, set as exp(-weights/sigma) with lambda and sigma learned through cross validation
+- sgggmCV.m = sparse group Gaussian graphical model for estimating a sparse group covariance matrix (not sparse group LASSO)
+- sgggmCVtest.m = synthetic test case for sgggmCV.m

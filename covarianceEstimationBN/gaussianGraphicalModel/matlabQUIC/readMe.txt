@@ -1,0 +1,1 @@
+sggmQUIC.m is a MATLAB implementation of QUIC without using C++. The code is much slower, hence critical to create a mex file of C++ code. Save file for reference.
