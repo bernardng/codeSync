@@ -21,9 +21,9 @@ from sklearn.cluster import WardAgglomeration
 n_parcels = 500.0
 
 # Change path to files
-BASE_DIR = "/volatile/bernardng/data/imagen/"
+BASE_DIR = "/media/FreeAgent GoFlex Drive/research/data/imagen/"
 subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectList.txt"), dtype='str')
-ANAT_DIR = "/volatile/bernardng/templates/freesurfer/cort_subcort_333.nii"
+ANAT_DIR = "/media/FreeAgent GoFlex Drive/research/templates/freesurfer/cort_subcort_cerebellum_333.nii"
 
 # Concatenating PCA-ed voxel timecourses across subjects
 for sub in subList:
@@ -59,7 +59,7 @@ n_vox = np.sum(brain != 0) # Number of voxels within ROIs in Freesurfer template
 tc_group = tc_group.reshape((dim[0], dim[1], dim[2], -1))
 n_tpts = tc_group.shape[-1]
 for t in np.arange(n_tpts):
-    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=2.5)
+    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=1.5)
 tc_group = tc_group.reshape((-1, n_tpts))
 
 # Perform parcellation on smoothed PCA-ed timecourses for each ROI
