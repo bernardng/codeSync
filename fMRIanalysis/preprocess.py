@@ -68,12 +68,15 @@ if __name__ == '__main__':
     gm_img = as_volume_img(gm_file)
     gm_img = gm_img.resampled_to_img(tc_img)
     gm = gm_img.get_data()
+    gm[gm < 0] = 0
     wm_img = as_volume_img(wm_file)
     wm_img = wm_img.resampled_to_img(tc_img)
     wm = wm_img.get_data()
+    wm[wm < 0] = 0
     csf_img = as_volume_img(csf_file)
     csf_img = csf_img.resampled_to_img(tc_img)
     csf = csf_img.get_data()
+    csf[csf < 0] = 0
     tissue_dim = gm.ravel().shape[0] # For checking if have to resample tissue to template
     
     print "Binarizing tissue masks..."
