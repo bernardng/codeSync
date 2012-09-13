@@ -1,0 +1,50 @@
+--------------------
+Notes
+--------------------
+- Ensure the following file is in groupFiber folder
+t2_mni.nii = ICBM T2 volume resampled to DWI data space
+- Ensure the following files are in warp_mni folder
+dwi_ecc.nii = eddy current corrected dwi.nii
+bvec_ecc.bvec or bvec.txt
+bval.bval or bval.bval
+- ../../.. changes depending on where the script is called
+
+--------------------
+Procedures
+--------------------
+0. Define path to scripts
+
+script_path=/home/bernardyng/code/dMRI2MNIalignment
+
+- Might need to enter FSL environment by typing "fsl"; rem to type "exit" when done.
+
+1. Extract average B0 volume from dwi_ecc.nii
+
+python $script_path/extract_B0.py -i dwi_ecc.nii -b bval.bval
+
+- Output saved as b0.nii
+
+2. Affinely register b0.nii to t2_mni.nii
+
+fsl4.1-flirt -in b0.nii -ref ../../../group/groupFiber/t2_mni.nii -omat affine.txt
+
+3. Reorient bvec_ecc.bvec to account for affine registration
+
+python $script_path/reorient_bvec.py -i bvec_ecc.bvec -a affine.txt
+
+- Output saved as bvec_ecc_reorient.bvec
+
+4. Create column version of bvec_ecc_reorient.bvec
+
+python $script_path/columnize.py -i bvec_ecc_reorient.bvec -o bvec_ecc_reorient.txt -d 6
+
+5. Nonrigidly warp b0.nii to t2_mni.nii
+
+fsl4.1-fnirt --in=b0.nii --ref=../../../group/groupFiber/t2_mni.nii --subsamp=8,4,2,2 --cout=d_field.nii --aff=affine.txt
+
+6. Apply warp to dwi_ecc.nii
+
+fsl4.1-applywarp -i dwi_ecc.nii -o dwi_ecc_mni.nii -r ../../../group/groupFiber/t2_mni.nii -w d_field.nii.gz
+gunzip dwi_ecc_mni.nii.gz
+
+- Check that dwi_ecc_mni.nii is aligned with t2_mni.nii

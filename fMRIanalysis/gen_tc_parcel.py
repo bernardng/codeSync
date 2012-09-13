@@ -1,6 +1,6 @@
 """
 Generate parcel timecourses for IMAGEN data
-Input:  tc_file = location of time courses to be preprocessed (.mat)
+Input:  tc_file = location of preprocessed time courses (.mat)
         gm_file = location of gray matter mask (.nii)
         wm_file = location of white matter mask (.nii)
         csf_file = location of CSF mask (.nii)
@@ -42,12 +42,15 @@ if __name__ == '__main__':
     gm_img = as_volume_img(gm_file)
     gm_img = gm_img.resampled_to_img(template_img)
     gm = gm_img.get_data()
+    gm[gm < 0] = 0
     wm_img = as_volume_img(wm_file)
     wm_img = wm_img.resampled_to_img(template_img)
     wm = wm_img.get_data()
+    wm[wm < 0] = 0
     csf_img = as_volume_img(csf_file)
     csf_img = csf_img.resampled_to_img(template_img)
     csf = csf_img.get_data()
+    csf[csf < 0] = 0
     probTotal = gm + wm + csf
     ind = probTotal > 0
     gm[ind] = gm[ind] / probTotal[ind]
