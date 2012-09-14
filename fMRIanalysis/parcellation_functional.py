@@ -23,12 +23,12 @@ from scipy.ndimage.morphology import binary_closing
 n_parcels = 500.0
 
 # Change path to files
-BASE_DIR = "/media/FreeAgent GoFlex Drive/research/data/imagen/"
+BASE_DIR = "/media/GoFlex/research/data/imagen/"
 subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectList.txt"), dtype='str')
-REF_DIR = "/media/FreeAgent GoFlex Drive/research/templates/spm8/rgrey.nii" 
-GM_DIR = "/media/FreeAgent GoFlex Drive/research/templates/spm8/grey.nii"
-WM_DIR = "/media/FreeAgent GoFlex Drive/research/templates/spm8/white.nii"
-CSF_DIR = "/media/FreeAgent GoFlex Drive/research/templates/spm8/csf.nii"
+REF_DIR = "/media/GoFlex/research/templates/spm8/rgrey.nii" 
+GM_DIR = "/media/GoFlex/research/templates/spm8/grey.nii"
+WM_DIR = "/media/GoFlex/research/templates/spm8/white.nii"
+CSF_DIR = "/media/GoFlex/research/templates/spm8/csf.nii"
 
 # Concatenating PCA-ed voxel timecourses across subjects
 for sub in subList:

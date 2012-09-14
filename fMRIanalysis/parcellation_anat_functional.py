@@ -21,9 +21,9 @@ from sklearn.cluster import WardAgglomeration
 n_parcels = 500.0
 
 # Change path to files
-BASE_DIR = "/media/FreeAgent GoFlex Drive/research/data/imagen/"
+BASE_DIR = "/media/GoFlex/research/data/imagen/"
 subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectList.txt"), dtype='str')
-ANAT_DIR = "/media/FreeAgent GoFlex Drive/research/templates/freesurfer/cort_subcort_cerebellum_333.nii"
+ANAT_DIR = "/media/GoFlex/research/templates/freesurfer/cort_subcort_cerebellum_333.nii"
 
 # Concatenating PCA-ed voxel timecourses across subjects
 for sub in subList:

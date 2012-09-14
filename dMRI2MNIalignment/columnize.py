@@ -9,7 +9,11 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest='num_dec')
     input_path = parser.parse_args().input_file
     output_path = parser.parse_args().output_file
+    _, ext = os.path.splitext(input_path)
     x = np.loadtxt(input_path).T
+    if ext == ".txt": # if input is .txt, the output should be .bval with a row of b-values
+        x = x[:, np.newaxis]
+        x = x.T
     num_dec = parser.parse_args().num_dec or '6'
     np.savetxt(output_path, x, fmt='%1.' + num_dec + 'f')
     

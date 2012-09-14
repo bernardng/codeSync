@@ -1,0 +1,27 @@
+--------------------
+Notes
+--------------------
+- Must be in groupFiber folder
+
+--------------------
+Procedures
+--------------------
+0. Define path to scripts
+
+script_path=/home/bernardyng/code/dMRI2MNIalignment
+
+- Might need to enter FSL environment by typing "fsl"; rem to type "exit" when done.
+
+1. Create dwi_ecc_mni_group.nii 
+
+fsl4.1-fslmerge -t dwi_ecc_mni_group.nii /media/GoFlex/research/data/imagen/*/dwi/warp_mni/dwi_ecc_mni.nii
+
+2. Create bvec_ecc_reorient_group.txt and bval_group.txt
+
+python $script_path/concat.py
+
+3. Create bvec_ecc_reorient_group.bvec and bval_group.bval
+
+python $script_path/columnize.py -i bvec_ecc_reorient_group.txt -o bvec_ecc_reorient_group.bvec -d 6
+python $script_path/columnize.py -i bval_group.txt -o bval_group.bval -d 0
+
