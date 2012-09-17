@@ -19,6 +19,7 @@ scaleBest = 0.1; % Initialization
 [trainInd,testInd] = cvSeq(n,kFolds); % Create validation folds
 scaleAcc = scaleBest; % Skip computed lambda during refinement
 % Refinement level
+matlabpool('5');
 for i = 1:nLevels
     if i == 1
         scaleGrid = logspace(log10(scaleMin),log10(scaleMax),nGridPts);
@@ -45,13 +46,17 @@ for i = 1:nLevels
         Xtest = X(testInd{k},:);
         Strain = cov(Xtrain);
         Stest = cov(Xtest);
-        for w = 1:nWt
-            K = QUIC('path',Strain,lambdaMax.*exp(-weight/sigmaGrid(w)).*~eye(d),scaleGridMod,1e-9,2,200);
-            for j = 1:length(scaleGridMod)
-                dg = dualGap(K(:,:,j),Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d))
-                if dg < 1e-5
-                    evid(j,w,k) = logDataLikelihood(Stest,K(:,:,j));
-                end
+        for j = 1:length(scaleGridMod)
+            %K = QUIC('path',Strain,lambdaMax.*scaleGridMod(j).*~eye(d),exp(-weight/sigmaGrid),1e-9,2,200);
+    	    parfor w = 1:nWt
+		K(:,:,w) = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d)),1e-9,2,200);
+                dg(w) = dualGap(K(:,:,w),Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d))
+		if dg(w) < 1e-5                
+		    evid(j,w,k) = logDataLikelihood(Stest,K(:,:,w));
+		end
+	    end
+            if sum(dg < 1e-5)==0
+		break;
             end
         end
     end
@@ -61,6 +66,7 @@ for i = 1:nLevels
     scaleBest = scaleGridMod(x);
     sigmaBest = sigmaGrid(y);
 end
+matlabpool('close');
 % Compute sparse inverse covariance using optimal lambda
 lambdaBest = lambdaMax*scaleBest;
 K = QUIC('default',S,lambdaBest.*exp(-weight/sigmaBest).*~eye(d),1e-9,2,200);

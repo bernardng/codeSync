@@ -15,7 +15,7 @@ if __name__ == '__main__':
     afile = afile.replace('.nii', '_bin.nii')
     vol_img = as_volume_img(filepath)
     vol = vol_img.get_data() > thresh
-    vol = binary_dilation(vol, structure=np.ones((3, 3, 3))).astype(np.uint8)
+    vol = binary_dilation(vol, structure=np.ones((2, 2, 2))).astype(np.uint8)
     nii = nib.Nifti1Image(vol, vol_img.affine)
     nib.save(nii, os.path.join(path, afile))
 

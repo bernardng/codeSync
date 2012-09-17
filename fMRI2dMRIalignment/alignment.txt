@@ -15,7 +15,7 @@ script_path=/home/bn228083/code/fMRI2dMRIalignment
 
 - Might need to enter FSL environment by typing "fsl"; rem to type "exit" when done.
 
-1. Average the 4D EPI and DWI volumes
+1. Average the 4D fMRI and DWI volumes
 
 python $script_path/gen_ave_vol.py -i rest.nii
 python $script_path/gen_ave_vol.py -i dwi_ecc.nii

@@ -41,9 +41,14 @@ for i = 1:nLevels
         Xtest = X(testInd{k},:);
         Strain = cov(Xtrain);
         Stest = cov(Xtest);
-        K = QUIC('path',Strain,lambdaMax*~eye(d),scaleGridMod,1e-9,2,200);
+        % K = QUIC('path',Strain,lambdaMax*~eye(d),scaleGridMod,1e-9,2,200);
         for j = 1:length(scaleGridMod)
-            dg = dualGap(K(:,:,j),Strain,lambdaMax*scaleGridMod(j)*~eye(d))
+	    if j == 1	    
+		K = QUIC('path',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200);
+	    else
+		K = QUIC('path',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200,K,inv(K));
+	    end
+	    dg = dualGap(K(:,:,j),Strain,lambdaMax*scaleGridMod(j)*~eye(d))
             % Check convergence
             if dg < 1e-5
                 evid(j,k) = logDataLikelihood(Stest,K(:,:,j));

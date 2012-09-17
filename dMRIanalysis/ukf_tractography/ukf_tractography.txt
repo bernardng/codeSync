@@ -42,6 +42,4 @@ UKFTractography --dwiFile dwi_ecc_int16.nhdr --maskFile wmMask_rs_aff_bin.nhdr -
 5. Open tracks_ukf.vtk (ASCII file) using MedINRIA (old version) under DTI Track. Save the file as tracks_ukf.fib (Binary file). 
 
 
---------- up to here ---------
 
-6. Run fiberCountUKF.m
