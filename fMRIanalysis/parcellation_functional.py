@@ -25,10 +25,10 @@ n_parcels = 500.0
 # Change path to files
 BASE_DIR = "/media/GoFlex/research/data/imagen/"
 subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectList.txt"), dtype='str')
-REF_DIR = "/media/GoFlex/research/templates/spm8/rgrey.nii" 
-GM_DIR = "/media/GoFlex/research/templates/spm8/grey.nii"
-WM_DIR = "/media/GoFlex/research/templates/spm8/white.nii"
-CSF_DIR = "/media/GoFlex/research/templates/spm8/csf.nii"
+REF_DIR = "/media/GoFlex/research/templates/spm/rgrey.nii" 
+GM_DIR = "/media/GoFlex/research/templates/icbm/gm.nii"
+WM_DIR = "/media/GoFlex/research/templates/icbm/wm.nii"
+CSF_DIR = "/media/GoFlex/research/templates/icbm/csf.nii"
 
 # Concatenating PCA-ed voxel timecourses across subjects
 for sub in subList:
@@ -72,7 +72,7 @@ tissue_mask[probTotal.ravel() == 0] = 0
 brain = np.reshape(tissue_mask == 1, (dim[0], dim[1], dim[2]))
 brain = binary_closing(brain, structure=np.ones((2, 2, 2)))
 brain_img = VolumeImg(brain, affine=gm_img.affine, world_space=None, interpolation='nearest')
-brain_img = brain_img.resampled_to_img(ref_img)
+brain_img = brain_img.resampled_to_img(ref_img, interpolation='nearest')
 brain = brain_img.get_data()
 
 # Spatial smoothing to encourage smooth parcels
@@ -95,9 +95,22 @@ ward.fit(tc_group.T)
 template = np.zeros((dim[0], dim[1], dim[2]))
 template[brain==1] = ward.labels_ + 1 # labels start from 0, which is used for background
 
+# Remove single voxels not connected to parcel
+for i in np.unique(template)[1:]:
+    labels, n_labels = label(template == i, structure=np.ones((3,3,3)))
+    if n_labels > 1:
+	for j in np.arange(n_labels):
+	    if np.sum(labels == j + 1) < 10:
+		template[labels == j + 1] = 0
+
+# Saving the template
+io.savemat(os.path.join(BASE_DIR, "group/parcel500.mat"), {"template": template})
+nii = nib.Nifti1Image(template, brain_img.affine)
+nib.save(nii, os.path.join(BASE_DIR, "group/parcel500.nii"))
+
 # Remove parcels with zero timecourses in any of the subjects
 template = template.ravel()
-template_refined = template.copy()
+template_no_zero_tc = template.copy()
 label = np.unique(template)
 for sub in subList:
     print str("Subject" + sub)
@@ -110,14 +123,17 @@ for sub in subList:
     gm_img = as_volume_img(gm_file)
     gm_img = gm_img.resampled_to_img(brain_img)
     gm = gm_img.get_data()
+    gm[gm < 0] = 0
     wm_file = os.path.join(BASE_DIR, sub, "anat", "wmMask.nii")
     wm_img = as_volume_img(wm_file)
     wm_img = wm_img.resampled_to_img(brain_img)
     wm = wm_img.get_data()
+    wm[wm < 0] = 0
     csf_file = os.path.join(BASE_DIR, sub, "anat", "csfMask.nii")
     csf_img = as_volume_img(csf_file)
     csf_img = csf_img.resampled_to_img(brain_img)
     csf = csf_img.get_data()
+    csf[csf < 0] = 0
     probTotal = gm + wm + csf
     ind = probTotal > 0
     gm[ind] = gm[ind] / probTotal[ind]
@@ -133,17 +149,17 @@ for sub in subList:
         ind = (template == label[i + 1]) & (tissue_mask == 1)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
         if np.sum(tc_parcel[:, i]) == 0:
-            template_refined[template == label[i + 1]] = 0
-template_refined = template_refined.reshape([dim[0], dim[1], dim[2]])
+            template_no_zero_tc[template == label[i + 1]] = 0
+template_no_zero_tc = template_no_zero_tc.reshape([dim[0], dim[1], dim[2]])
 
 # Ensure template labels do not have gaps in the numbers, e.g. 0 1 3 ...
-rois = np.unique(template_refined)
-template_refined = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_refined[np.newaxis, :]).astype(int).argmax(0)
+rois = np.unique(template_no_zero_tc)
+template_no_zero_tc = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_no_zero_tc[np.newaxis, :]).astype(int).argmax(0)
 
-# Saving the template
-io.savemat(os.path.join(BASE_DIR, "group/parcel500.mat"), {"template": template_refined})
-nii = nib.Nifti1Image(template_refined, brain_img.affine)
-nib.save(nii, os.path.join(BASE_DIR, "group/parcel500.nii"))
+# Saving the template_no_zero_tc
+io.savemat(os.path.join(BASE_DIR, "group/parcel500_no_zero_tc.mat"), {"template": template_no_zero_tc})
+nii = nib.Nifti1Image(template_no_zero_tc, brain_img.affine)
+nib.save(nii, os.path.join(BASE_DIR, "group/parcel500_no_zero_tc.nii"))
 
             
 

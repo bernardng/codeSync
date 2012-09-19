@@ -11,6 +11,7 @@ import numpy as np
 import nibabel as nib
 from scipy import io
 from scipy.ndimage import gaussian_filter
+from scipy.ndimage import label
 from nipy.labs import as_volume_img
 from sklearn.decomposition import PCA
 from sklearn.externals.joblib import Memory
@@ -59,7 +60,7 @@ n_vox = np.sum(brain != 0) # Number of voxels within ROIs in Freesurfer template
 tc_group = tc_group.reshape((dim[0], dim[1], dim[2], -1))
 n_tpts = tc_group.shape[-1]
 for t in np.arange(n_tpts):
-    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=1.5)
+    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=2)
 tc_group = tc_group.reshape((-1, n_tpts))
 
 # Perform parcellation on smoothed PCA-ed timecourses for each ROI
@@ -81,9 +82,22 @@ for i in np.arange(n_rois):
         ward.fit(tc_group[roi_mask.ravel(), :].T)
         template[roi_mask] = ward.labels_ + np.shape(np.unique(template))[0] 
 
+# Remove single voxels not connected to parcel
+for i in np.unique(template)[1:]:
+    labels, n_labels = label(template == i, structure=np.ones((3,3,3)))
+    if n_labels > 1:
+	for j in np.arange(n_labels):
+	    if np.sum(labels == j + 1) < 10:
+		template[labels == j + 1] = 0
+
+# Saving the template
+io.savemat(os.path.join(BASE_DIR, "group/fs_w_cer_parcel500.mat"), {"template":template})
+nii = nib.Nifti1Image(template, brain_img.affine)
+nib.save(nii, os.path.join(BASE_DIR, "group/fs_w_cer_parcel500.nii"))         
+
 # Remove parcels with zero timecourses in any of the subjects
 template = template.ravel()
-template_refined = template.copy()
+template_no_zero_tc = template.copy()
 label = np.unique(template)
 for sub in subList:
     print str("Subject" + sub)
@@ -96,14 +110,17 @@ for sub in subList:
     gm_img = as_volume_img(gm_file)
     gm_img = gm_img.resampled_to_img(brain_img)
     gm = gm_img.get_data()
+    gm[gm < 0] = 0
     wm_file = os.path.join(BASE_DIR, sub, "anat", "wmMask.nii")
     wm_img = as_volume_img(wm_file)
     wm_img = wm_img.resampled_to_img(brain_img)
     wm = wm_img.get_data()
+    wm[wm < 0] = 0
     csf_file = os.path.join(BASE_DIR, sub, "anat", "csfMask.nii")
     csf_img = as_volume_img(csf_file)
     csf_img = csf_img.resampled_to_img(brain_img)
     csf = csf_img.get_data()
+    csf[csf < 0] = 0
     probTotal = gm + wm + csf
     ind = probTotal > 0
     gm[ind] = gm[ind] / probTotal[ind]
@@ -118,16 +135,16 @@ for sub in subList:
     for i in np.arange(label.shape[0] - 1): # Skipping background
         ind = (template == label[i + 1]) & (tissue_mask == 1)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
-        if np.sum(tc_parcel[:, i]) == 0 or np.sum(ind) < 10:
-            template_refined[template == label[i + 1]] = 0
-template_refined = template_refined.reshape([dim[0], dim[1], dim[2]])
+        if np.sum(tc_parcel[:, i]) == 0:
+            template_no_zero_tc[template == label[i + 1]] = 0
+template_no_zero_tc = template_no_zero_tc.reshape([dim[0], dim[1], dim[2]])
 
 # Ensure template labels do not have gaps in the numbers, e.g. 0 1 3 ...
-rois = np.unique(template_refined)
-template_refined = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_refined[np.newaxis, :]).astype(int).argmax(0)
+rois = np.unique(template_no_zero_tc)
+template_no_zero_tc = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_no_zero_tc[np.newaxis, :]).astype(int).argmax(0)
 
-# Saving the template
-io.savemat(os.path.join(BASE_DIR, "group/fs_parcel500.mat"), {"template": template_refined})
-nii = nib.Nifti1Image(template_refined, brain_img.affine)
-nib.save(nii, os.path.join(BASE_DIR, "group/fs_parcel500.nii"))            
+# Saving template_no_zero_tc
+io.savemat(os.path.join(BASE_DIR, "group/fs_w_cer_parcel500_no_zero_tc.mat"), {"template": template_no_zero_tc})
+nii = nib.Nifti1Image(template_no_zero_tc, brain_img.affine)
+nib.save(nii, os.path.join(BASE_DIR, "group/fs_w_cer_parcel500_no_zero_tc.nii"))            
 
