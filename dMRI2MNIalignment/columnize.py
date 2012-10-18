@@ -11,9 +11,10 @@ if __name__ == '__main__':
     output_path = parser.parse_args().output_file
     _, ext = os.path.splitext(input_path)
     x = np.loadtxt(input_path).T
-    if ext == ".txt": # if input is .txt, the output should be .bval with a row of b-values
+    dim = x.shape
+    if ext == ".txt" and np.size(dim) == 1: # if input is .txt, the output should be .bval with a row of b-values
         x = x[:, np.newaxis]
         x = x.T
-    num_dec = parser.parse_args().num_dec or '6'
+    num_dec = parser.parse_args().num_dec
     np.savetxt(output_path, x, fmt='%1.' + num_dec + 'f')
     

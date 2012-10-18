@@ -14,7 +14,7 @@ UKF Tractography
 --------------------
 0. Define path to scripts
 
-script_path=/home/bn228083/code/dMRIanalysis
+script_path=/home/bernardyng/code/dMRIanalysis
 
 1. Convert dwi_ecc.nii to int16 (-t 1)
 

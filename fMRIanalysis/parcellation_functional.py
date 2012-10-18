@@ -17,7 +17,8 @@ from sklearn.decomposition import PCA
 from sklearn.externals.joblib import Memory
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import WardAgglomeration
-from scipy.ndimage.morphology import binary_closing
+from scipy.ndimage.morphology import binary_closing, binary_dilation, generate_binary_structure
+from scipy.ndimage import label
 
 # Choose number of parcels
 n_parcels = 500.0
@@ -25,7 +26,7 @@ n_parcels = 500.0
 # Change path to files
 BASE_DIR = "/media/GoFlex/research/data/imagen/"
 subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectList.txt"), dtype='str')
-REF_DIR = "/media/GoFlex/research/templates/spm/rgrey.nii" 
+REF_DIR = "/media/GoFlex/research/templates/spm8/rgrey.nii" 
 GM_DIR = "/media/GoFlex/research/templates/icbm/gm.nii"
 WM_DIR = "/media/GoFlex/research/templates/icbm/wm.nii"
 CSF_DIR = "/media/GoFlex/research/templates/icbm/csf.nii"
@@ -70,9 +71,19 @@ tissue = np.array([gm.ravel(), wm.ravel(), csf.ravel()])
 tissue_mask = tissue.argmax(axis=0) + 1
 tissue_mask[probTotal.ravel() == 0] = 0
 brain = np.reshape(tissue_mask == 1, (dim[0], dim[1], dim[2]))
-brain = binary_closing(brain, structure=np.ones((2, 2, 2)))
+
+brain = gm > 0.15
+
+brain = binary_dilation(brain, structure=generate_binary_structure(3, 1))
 brain_img = VolumeImg(brain, affine=gm_img.affine, world_space=None, interpolation='nearest')
 brain_img = brain_img.resampled_to_img(ref_img, interpolation='nearest')
+brain = brain_img.get_data()
+brain = binary_closing(brain, structure=generate_binary_structure(3, 1))
+labels, n_labels = label(brain) # Remove isolated voxels
+for i in np.unique(labels)[2:]:
+   brain[labels == i] = 0
+
+brain_img = as_volume_img(GM_DIR)
 brain = brain_img.get_data()
 
 # Spatial smoothing to encourage smooth parcels
@@ -80,7 +91,7 @@ dim = np.shape(brain)
 tc_group = tc_group.reshape((dim[0], dim[1], dim[2], -1))
 n_tpts = tc_group.shape[-1]
 for t in np.arange(n_tpts):
-    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=2)
+    tc_group[:,:,:,t] = gaussian_filter(tc_group[:,:,:,t], sigma=1.5)
 tc_group = tc_group.reshape((-1, n_tpts))
 tc_group = tc_group[brain.ravel()==1, :]
 
@@ -110,7 +121,7 @@ nib.save(nii, os.path.join(BASE_DIR, "group/parcel500.nii"))
 
 # Remove parcels with zero timecourses in any of the subjects
 template = template.ravel()
-template_no_zero_tc = template.copy()
+template_refined = template.copy()
 label = np.unique(template)
 for sub in subList:
     print str("Subject" + sub)
@@ -149,17 +160,17 @@ for sub in subList:
         ind = (template == label[i + 1]) & (tissue_mask == 1)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
         if np.sum(tc_parcel[:, i]) == 0:
-            template_no_zero_tc[template == label[i + 1]] = 0
-template_no_zero_tc = template_no_zero_tc.reshape([dim[0], dim[1], dim[2]])
+            template_refined[template == label[i + 1]] = 0
+template_refined = template_refined.reshape([dim[0], dim[1], dim[2]])
 
 # Ensure template labels do not have gaps in the numbers, e.g. 0 1 3 ...
-rois = np.unique(template_no_zero_tc)
-template_no_zero_tc = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_no_zero_tc[np.newaxis, :]).astype(int).argmax(0)
+rois = np.unique(template_refined)
+template_refined = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_refined[np.newaxis, :]).astype(int).argmax(0)
 
-# Saving the template_no_zero_tc
-io.savemat(os.path.join(BASE_DIR, "group/parcel500_no_zero_tc.mat"), {"template": template_no_zero_tc})
-nii = nib.Nifti1Image(template_no_zero_tc, brain_img.affine)
-nib.save(nii, os.path.join(BASE_DIR, "group/parcel500_no_zero_tc.nii"))
+# Saving the template_refined
+io.savemat(os.path.join(BASE_DIR, "group/ica_roi_parcel500_refined.mat"), {"template": template_refined})
+nii = nib.Nifti1Image(template_refined, brain_img.affine)
+nib.save(nii, os.path.join(BASE_DIR, "group/ica_roi_parcel500_refined.nii"))
 
             
 
