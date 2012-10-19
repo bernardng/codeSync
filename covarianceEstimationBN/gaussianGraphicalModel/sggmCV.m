@@ -48,10 +48,10 @@ for i = 1:nLevels
 	    else
 		K = QUIC('default',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200,K,inv(K));
 	    end
-	    dg = dualGap(K(:,:,j),Strain,lambdaMax*scaleGridMod(j)*~eye(d))
+	    dg = dualGap(K,Strain,lambdaMax*scaleGridMod(j)*~eye(d))
             % Check convergence
             if dg < 1e-5
-                evid(j,k) = logDataLikelihood(Stest,K(:,:,j));
+                evid(j,k) = logDataLikelihood(Stest,K);
             else
                 break;
             end

@@ -90,7 +90,7 @@ for i in np.arange(n_rois):
 # Saving the template
 io.savemat(os.path.join(BASE_DIR, "group/fs_w_cer_parcel500.mat"), {"template":template})
 nii = nib.Nifti1Image(template, brain_img.affine)
-nib.save(nii, os.path.join(BASE_DIR, "group/fs_w_cer_parcel500.nii"))         
+nib.save(nii, os.path.join(BASE_DIR, "group/ica_roi_parcel500.nii"))         
 
 # Remove parcels with zero timecourses in any of the subjects
 template = template.ravel()
@@ -132,7 +132,7 @@ for sub in subList:
     for i in np.arange(label.shape[0] - 1): # Skipping background
         ind = (template == label[i + 1]) & (tissue_mask == 1)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
-        if np.sum(tc_parcel[:, i]) == 0:
+        if np.sum(tc_parcel[:, i]) == 0 or np.isnan(np.sum(tc_parcel[:, i])):
             template_refined[template == label[i + 1]] = 0
 template_refined = template_refined.reshape([dim[0], dim[1], dim[2]])
 
@@ -141,7 +141,7 @@ rois = np.unique(template_refined)
 template_refined = (rois[:, np.newaxis, np.newaxis, np.newaxis] == template_refined[np.newaxis, :]).astype(int).argmax(0)
 
 # Saving template_refined
-io.savemat(os.path.join(BASE_DIR, "group/fs_w_cer_parcel500_refined.mat"), {"template": template_refined})
+io.savemat(os.path.join(BASE_DIR, "group/ica_roi_parcel500_refined.mat"), {"template": template_refined})
 nii = nib.Nifti1Image(template_refined, brain_img.affine)
-nib.save(nii, os.path.join(BASE_DIR, "group/fs_w_cer_parcel500_refined.nii"))            
+nib.save(nii, os.path.join(BASE_DIR, "group/ica_roi_parcel500_refined.nii"))            
 
