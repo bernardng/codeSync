@@ -49,7 +49,7 @@ for i = 1:nLevels
         for j = 1:length(scaleGridMod)
             %K = QUIC('path',Strain,lambdaMax.*scaleGridMod(j).*~eye(d),exp(-weight/sigmaGrid),1e-9,2,200);
     	    parfor w = 1:nWt
-		K(:,:,w) = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d)),1e-9,2,200);
+		K(:,:,w) = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d),1e-9,2,200);
                 dg(w) = dualGap(K(:,:,w),Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d))
 		if dg(w) < 1e-5                
 		    evid(j,w,k) = logDataLikelihood(Stest,K(:,:,w));
