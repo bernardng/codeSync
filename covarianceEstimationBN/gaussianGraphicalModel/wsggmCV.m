@@ -61,8 +61,12 @@ for i = 1:nLevels
         end
     end
     evidAve = mean(evid,3);
-    [~,ind] = max(evidAve(:));
+    evidMax = max(evidAve(:));
+    ind = find(evidAve==evidMax);
     [x,y] = ind2sub(size(evidAve),ind);
+    xMax = max(x);
+    y = max(y(x==xMax));
+    x = xMax;
     scaleBest = scaleGridMod(x);
     sigmaBest = sigmaGrid(y);
 end
