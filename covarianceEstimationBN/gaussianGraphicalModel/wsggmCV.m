@@ -38,7 +38,9 @@ for i = 1:nLevels
     scaleGridMod = sort([scaleGrid(setdiff(1:length(scaleGrid),ind)),scaleBest],2,'descend'); % Remove computed scales
     scaleAcc = [scaleAcc,scaleGridMod]; % Store computed scales
     mu = mean(weight(weight>0)); % Fiber counts appear exponentially distributed
-    sigmaGrid = linspace(log(4/3)*mu,log(4)*mu,nWt); % Between 25th and 75th percentile
+    lb = prctile(weight(weight>0),5);
+    ub = prctile(weight(weight>0),95);
+    sigmaGrid = linspace(lb,ub,nWt); % Between 25th and 75th percentile
     evid = -inf*ones(length(scaleGridMod),nWt,kFolds);
     % Cross validation to set sparsity level
     for k = 1:kFolds
