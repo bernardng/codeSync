@@ -2,7 +2,7 @@
 % Input: tc = nxp, n = #samples, p = #features
 % Output: C = pxp, well-conditioned covariance matrix
 % Reference: Chen et al., Shrinkage Algorithms for MMSE Covariance Estimation, TSP, 2010
-function C = oas(tc)
+function [C,S] = oas(tc)
 [n,p] = size(tc);
 S = cov(tc); % Empirical covariance
 F = trace(S)*eye(p)/p; % Most well-conditioned estimate
