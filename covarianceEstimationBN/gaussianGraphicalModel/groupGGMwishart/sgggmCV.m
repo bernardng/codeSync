@@ -37,6 +37,7 @@ for k = 1:kFolds
     end
 end
 
+objOld = inf;
 for n = 1:maxIter
     Kgrp = sum(K,3)/((nFeat+1)*nSub);
     
@@ -102,7 +103,25 @@ for n = 1:maxIter
         end
     end
     
-    %%%%% Add Convergence criterion %%%%
-    
+    % Compute objective to check for convergence
+    obj = 0;
+    for s = 1:nSub
+        R = chol(K(:,:,s));
+        obj = obj - nSamp*sum(log(diag(R))) + 0.5*sum(sum(S(:,:,s)*K(:,:,s))) + 0.5*sum(sum(Cgrp*K(:,:,s)));
+    end
+    Rgrp = chol(Cgrp);
+    lambda = lambdaBest*(nFeat+1)*nSub/2;
+    Ctemp = Cgrp.*offDiag;
+    obj = obj - (nFeat+1)*nSub*sum(log(diag(Rgrp))) + lambda*norm(Ctemp(:),1)
+    if abs(obj-objOld)/abs(obj) < 1e-4
+        disp(['Converged at iteration ',int2str(n)]);
+        break;
+    else
+        objOld = obj;
+    end
 end
+
+
+
+
     
