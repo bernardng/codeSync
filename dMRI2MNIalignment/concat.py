@@ -6,7 +6,7 @@ BASE_DIR = "/media/GoFlex/research/data/imagen"
 subjectList = np.loadtxt(os.path.join(BASE_DIR, "group/groupFiber/goodWarpSubjectListDWI.txt"), dtype='str')
 
 i = 0
-for sub in subjectList[0:5]:
+for sub in subjectList:
     bvec = np.loadtxt(os.path.join(BASE_DIR, sub, "dwi/warp_mni/bvec_ecc_reorient.txt"))
     bval = np.loadtxt(os.path.join(BASE_DIR, sub, "dwi/warp_mni/bval.txt"))
     if i == 0:
