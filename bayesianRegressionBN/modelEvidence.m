@@ -5,8 +5,7 @@
 % Output:   alpha = optimal amount of regularization
 %           evid = model evidence
 function [alpha,evid] = modelEvidence(X,Y,K)
-filepath = '/home/bn228083/';
-addpath(genpath([filepath,'matlabToolboxes/markSchmidtCode']));
+addpath(genpath('/home/bernardyng/matlabToolboxes/markSchmidtCode'));
 
 [n,m] = size(X);
 d = size(K,1);
