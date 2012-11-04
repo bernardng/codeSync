@@ -107,7 +107,7 @@ for n = 1:maxIter
     obj = 0;
     for s = 1:nSub
         R = chol(K(:,:,s));
-        obj = obj - nSamp*sum(log(diag(R))) + 0.5*sum(sum(S(:,:,s)*K(:,:,s))) + 0.5*sum(sum(Cgrp*K(:,:,s)));
+        obj = obj - nSamp*sum(log(diag(R))) + 0.5*sum(sum(S(:,:,s).*K(:,:,s))) + 0.5*sum(sum(Cgrp.*K(:,:,s)));
     end
     Rgrp = chol(Cgrp);
     lambda = lambdaBest*(nFeat+1)*nSub/2;
