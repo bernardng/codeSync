@@ -21,17 +21,17 @@ for i = 1:nLevels
     if i == 1
         scaleGrid = logspace(log10(scaleMin),log10(scaleMax),nGridPts);
     else
-        if abs(scaleBest-scaleGrid(1))<1e-6
+        if abs(scaleBest-scaleGrid(1))<1e-12
             scaleGrid = logspace(log10(scaleGrid(2)),log10(scaleGrid(1)),nGridPts+1);
-        elseif abs(scaleBest-scaleGrid(end))<1e-6
+        elseif abs(scaleBest-scaleGrid(end))<1e-12
             scaleGrid = logspace(log10(scaleGrid(end)/10),log10(scaleGrid(end-1)),nGridPts+1);
         else
-            ind = find(abs(scaleGrid-scaleBest)<1e-6);
+            ind = find(abs(scaleGrid-scaleBest)<1e-12);
             scaleGrid = logspace(log10(scaleGrid(ind+1)),log10(scaleGrid(ind-1)),nGridPts+2);
         end
     end
     scaleGrid = fliplr(scaleGrid); % Always in descending order
-    [~,ind,~] = find(abs(ones(length(scaleAcc),1)*scaleGrid-scaleAcc'*ones(1,length(scaleGrid)))<1e-6); % More robust than using set functions
+    [~,ind,~] = find(abs(ones(length(scaleAcc),1)*scaleGrid-scaleAcc'*ones(1,length(scaleGrid)))<1e-12); % More robust than using set functions
     scaleGridMod = sort([scaleGrid(setdiff(1:length(scaleGrid),ind)),scaleBest],2,'descend'); % Remove computed scales
     scaleAcc = [scaleAcc,scaleGridMod]; % Store computed scales
     evid = -inf*ones(length(scaleGridMod),kFolds);

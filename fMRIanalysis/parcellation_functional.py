@@ -21,11 +21,11 @@ from scipy.ndimage.morphology import binary_closing, binary_dilation, generate_b
 from scipy.ndimage import label
 
 # Choose number of parcels
-n_parcels = 500.0
+n_parcels = 150.0
 
 # Change path to files
 BASE_DIR = "/media/GoFlex/research/data/imagen/"
-subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectList.txt"), dtype='str')
+subList = np.loadtxt(os.path.join(BASE_DIR, "subjectLists/subjectListDWI.txt"), dtype='str')
 REF_DIR = "/media/GoFlex/research/templates/spm8/rgrey.nii" 
 GM_DIR = "/media/GoFlex/research/templates/icbm/gm.nii"
 WM_DIR = "/media/GoFlex/research/templates/icbm/wm.nii"
@@ -115,9 +115,9 @@ for i in np.unique(template)[1:]:
 		template[labels == j + 1] = 0
 
 # Saving the template
-io.savemat(os.path.join(BASE_DIR, "group/parcel500.mat"), {"template": template})
+io.savemat(os.path.join(BASE_DIR, "group/gm_bin_parcel150.mat"), {"template": template})
 nii = nib.Nifti1Image(template, brain_img.affine)
-nib.save(nii, os.path.join(BASE_DIR, "group/parcel500.nii"))
+nib.save(nii, os.path.join(BASE_DIR, "group/gm_bin_parcel150.nii"))
 
 # Remove parcels with zero timecourses in any of the subjects
 template = template.ravel()
@@ -159,7 +159,7 @@ for sub in subList:
     for i in np.arange(label.shape[0] - 1): # Skipping background
         ind = (template == label[i + 1]) & (tissue_mask == 1)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
-        if np.sum(tc_parcel[:, i]) == 0:
+        if np.sum(tc_parcel[:, i]) == 0 or np.isnan(np.sum(tc_parcel[:, i])):
             template_refined[template == label[i + 1]] = 0
 template_refined = template_refined.reshape([dim[0], dim[1], dim[2]])
 
