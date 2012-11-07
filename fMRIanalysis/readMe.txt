@@ -17,7 +17,7 @@ Below is an example for the IMAGEN database
 Combining predefined ROIs with remaining graymatter voxels
 -------------------------------------------------------------
 1. Combine the ROIs and GM voxels into a single volume.
-brain = np.zeros(gm)
+brain = np.zeros(np.shape(gm))
 brain[gm > 0] = 1
 brain[roi > 1] = roi[roi > 1]
 

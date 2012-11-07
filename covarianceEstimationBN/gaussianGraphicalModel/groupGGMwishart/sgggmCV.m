@@ -53,13 +53,13 @@ for n = 1:maxIter
         if i == 1
             scaleGrid = logspace(log10(scaleMin),log10(scaleMax),nGridPts);
         else
-            if abs(scaleBest-scaleGrid(1))<1e-12
-                scaleGrid = logspace(log10(scaleGrid(2)),log10(scaleGrid(1)),nGridPts+1);
-            elseif abs(scaleBest-scaleGrid(end))<1e-12
-                scaleGrid = logspace(log10(scaleGrid(end)/10),log10(scaleGrid(end-1)),nGridPts+1);
+            if abs(scaleBest-scaleGridMod(1))<1e-12
+                scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)),nGridPts+1);
+            elseif abs(scaleBest-scaleGridMod(end))<1e-12
+                scaleGrid = logspace(log10(scaleGridMod(end)/10),log10(scaleGridMod(end-1)),nGridPts+1);
             else
-                ind = find(abs(scaleGrid-scaleBest)<1e-12);
-                scaleGrid = logspace(log10(scaleGrid(ind+1)),log10(scaleGrid(ind-1)),nGridPts+2);
+                ind = find(abs(scaleGridMod-scaleBest)<1e-12);
+                scaleGrid = logspace(log10(scaleGridMod(ind+1)),log10(scaleGridMod(ind-1)),nGridPts+2);
             end
         end
         scaleGrid = fliplr(scaleGrid); % Always in descending order
