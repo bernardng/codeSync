@@ -22,7 +22,7 @@ for i = 1:nLevels
         scaleGrid = logspace(log10(scaleMin),log10(scaleMax),nGridPts);
     else
         if abs(scaleBest-scaleGridMod(1))<1e-12
-            scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)/(10^(1/(2*i)))),nGridPts+1);
+            scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)*(10^(1/(2*i)))),nGridPts+1);
         elseif abs(scaleBest-scaleGridMod(end))<1e-12
             scaleGrid = logspace(log10(scaleGridMod(end)/(10^(1/(2*i)))),log10(scaleGridMod(end-1)),nGridPts+1);
         else
