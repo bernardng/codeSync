@@ -30,8 +30,8 @@ cd /media/GoFlex/research/data/imagen/$line/dwi/
 #gunzip -f rest_ave_ss_aff.nii.gz
 
 # Apply learned warp to WM mask and parcel template to DWI
-fsl4.1-flirt -in /media/GoFlex/research/data/imagen/group/ica_roi_parcel500_refined.nii -ref alignment/dwi_ecc_ave_ss.nii -applyxfm -init alignment/mni3mmtodwi_aff.txt -out ica_roi_parcel500_refined_aff.nii -interp nearestneighbour
-gunzip -f ica_roi_parcel500_refined_aff.nii.gz
+fsl4.1-flirt -in /media/GoFlex/research/data/imagen/group/ica_roi_parcel150_refined.nii -ref alignment/dwi_ecc_ave_ss.nii -applyxfm -init alignment/mni3mmtodwi_aff.txt -out ica_roi_parcel150_refined_aff.nii -interp nearestneighbour
+gunzip -f ica_roi_parcel150_refined_aff.nii.gz
 #fsl4.1-flirt -in wmMask_rs.nii -ref dwi_ecc_ave_ss.nii -applyxfm -init mni3mmtodwi_aff.txt -out wmMask_rs_aff.nii
 #gunzip -f wmMask_rs_aff.nii.gz
 

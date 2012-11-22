@@ -130,7 +130,7 @@ for sub in subList:
     # Refine Parcellation    
     tc_parcel = np.zeros((tc.shape[0], label.shape[0] - 1))
     for i in np.arange(label.shape[0] - 1): # Skipping background
-        ind = (template == label[i + 1]) & (tissue_mask == 1)
+        ind = (template == label[i + 1]) & (tissue_mask == 1) & (np.isnan(np.sum(tc, axis=0)) == 0)
         tc_parcel[:, i] = np.mean(tc[:, ind], axis=1)
         if np.sum(tc_parcel[:, i]) == 0 or np.isnan(np.sum(tc_parcel[:, i])):
             template_refined[template == label[i + 1]] = 0
