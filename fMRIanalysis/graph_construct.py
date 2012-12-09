@@ -50,7 +50,7 @@ if __name__ == '__main__':
     for nr in np.arange(n_rois):
         # Generate dilated mask for each ROI, in which the border would intersect with adjacent ROIs
         mask = binary_dilation(template == rois[nr], structure=np.ones((2, 2, 2)))
-        # Put 1 in adjacency matrix for ROIs that the diated mask intersect
+        # Put 1 in adjacency matrix for ROIs that the dilated mask intersect
         graph_adjacent[nr, list(set(np.unique(template[mask]) - 1) - set((rois[nr] - 1, -1)))] = 1 # -1 to account for background removal
     graph_adjacent = (graph_adjacent + graph_adjacent.T) > 0 # Symmeterization
     graph_adjacent = np.float64(graph_adjacent * (1 - graph_bilateral[:, :, -1]))

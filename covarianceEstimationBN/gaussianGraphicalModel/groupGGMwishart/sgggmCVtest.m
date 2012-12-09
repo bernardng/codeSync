@@ -1,14 +1,16 @@
 % Synthetic data testing for sgggmCV
-clear all; close all;
+clear all; 
+% close all;
 addpath(genpath('D:/research/covarianceEstimationBN'));
+addpath(genpath('D:/research/toolboxes/general'));
 
 % Parameter Selection
 nFeat = 100;
-nSamp = 198; % Make sure divisible by 3
+nSamp = 30; % Make sure divisible by 3
 nSub = 60;
-nIter = 5;
-df = nFeat+1;
-% df = 10*nFeat*(nFeat-1)/2;
+nIter = 1;
+% df = nFeat+1;
+df = 10*nFeat*(nFeat-1)/2;
 lTri = tril(ones(nFeat),-1)==1;
 
 distEucl = zeros(nIter,1);
@@ -25,7 +27,7 @@ catch ME
 end
 for n = 1:nIter
     % Generate group precision
-    Kgrp = sprandsym(nFeat,0.2,0.9);
+    Kgrp = sprandsym(nFeat,0.5,0.9);
     Kgrp = Kgrp+5*eye(nFeat);
     Kgrp = corrcov(Kgrp);
     KgrpSqrt = Kgrp^(0.5);
@@ -50,14 +52,23 @@ for n = 1:nIter
         X(:,:,s) = X(:,:,s)-ones(nSamp,1)*mean(X(:,:,s));
         X(:,:,s) = X(:,:,s)./(ones(nSamp,1)*std(X(:,:,s)));
         % Compute subject correlation matrices
-        C(:,:,s) = cov(X(:,:,s));
-%         Coas(:,:,s) = oas(X(:,:,s));
+%         C(:,:,s) = cov(X(:,:,s));
+        C(:,:,s) = oas(X(:,:,s));
         ClogEucl(:,:,s) = logm(C(:,:,s));
         Cinv(:,:,s) = inv(C(:,:,s));
     end
     
+    if 1
+        
     % Compute Euclidean Mean
-    Ceucl = mean(C,3); % Maybe use Coas??
+    tc = [];
+    for sub = 1:nSub
+        tc = [tc;X(:,:,sub)];
+    end
+    tc = tc-ones(size(tc,1),1)*mean(tc);
+    tc = tc./(ones(size(tc,1),1)*std(tc));
+    Ceucl = oas(tc);
+%     Ceucl = mean(C,3); % Maybe use Coas??
 %     dia = diag(1./sqrt(Ceucl(eye(nFeat)==1)));
 %     Ceucl = dia*Ceucl*dia;
     distTemp = logm(KgrpSqrt*Ceucl*KgrpSqrt);
@@ -76,14 +87,46 @@ for n = 1:nIter
     distTemp = logm(KgrpSqrt*ClogEucl*KgrpSqrt);
     distLogEucl(n) = norm(distTemp(lTri));
     
-    % Compute Frechet Mean
+    end
     
     % Compute SGGGM Mean
     nLevels = 3;
     kFolds = 3;
     nGridPts = 5;
     maxIter = 30;
-    [Csgggm,Ksgggm,objAcc] = sgggmCV(X,nLevels,kFolds,nGridPts,maxIter);
+    
+    nBootstrap = 50;
+    Csgggm = zeros(nFeat,nFeat,nBootstrap);
+    for b = 1:nBootstrap
+        % Generate subsamples
+        nSubsamp = 100;
+%         nSubPerSamp = 30;
+        Xall = [];
+        for s = 1:nSubsamp
+            Xacc = [];
+%             ind = randperm(nSub);
+%             for sub = 1:nSubPerSamp
+%                 Xacc = [Xacc;X(:,:,ind(sub))];
+%             end
+            ind = randperm(nSamp);
+            ind = ind(1:round(nSamp*2/4));
+%             ind = randperm(10000);
+%             ind = mod(ind,nSamp);
+%             ind(ind==0) = nSamp;
+%             ind = ind(1:nSamp/2);
+            for sub = 1:nSub
+                Xacc = [Xacc;X(ind,:,sub)];
+            end
+            Xacc = Xacc-ones(size(Xacc,1),1)*mean(Xacc);
+            Xacc = Xacc./(ones(size(Xacc,1),1)*std(Xacc));
+            Xall = cat(3,Xall,Xacc);
+        end
+        [Csgggm(:,:,b),Ksgggm,objAcc] = sgggmCV(Xall,nLevels,kFolds,nGridPts,maxIter);
+    end
+    Csgggm = mean(Csgggm,3);
+    ind = randperm(nFeat);
+
+%     [Csgggm,Ksgggm,objAcc] = sgggmCV(X,nLevels,kFolds,nGridPts,maxIter);
 %     dia = diag(1./sqrt(Csgggm(eye(nFeat)==1)));
 %     Csgggm = dia*Csgggm*dia; 
     distTemp = logm(KgrpSqrt*Csgggm*KgrpSqrt);
@@ -100,4 +143,5 @@ if matlabpoolUsed == 0
 end
 
 bar([mean(distEucl),mean(distLogEucl),mean(distSGGGM)]);
+mean(distSGGGM)/mean(distEucl)
 % [h,p] = ttest(distEucl,distSGGGM);
