@@ -1,1 +1,0 @@
-{"X": "array([[ 0.71294397,  0.15460135,  0.17784755, ..., -0.5877164 ,\n         0.07011545,  0.29154674],\n       [ 0.31794057,  0.70655879,  0.21122436, ..., -0.06349373,\n        -0.22544703, -0.18474903]])", "copy": "True", "n_components": "None", "connectivity": "<2x2 sparse matrix of type '<type 'numpy.int64'>'\n\twith 2 stored elements in COOrdinate format>"}
