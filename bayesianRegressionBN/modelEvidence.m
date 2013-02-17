@@ -10,7 +10,7 @@ addpath(genpath('/home/bernardyng/matlabToolboxes/markSchmidtCode'));
 [n,m] = size(X);
 d = size(K,1);
 [eigvec,eigval] = eig(full(K));
-eigval = eigval(eigval~=0); % Covert diagonal matrix to vector
+eigval = eigval(eye(d)==1); % Covert diagonal matrix to vector
 B = eigvec'*Y'*X/(X'*X)*X'*Y*eigvec;
 % Negative log model evidence
 f = @(alpha) -m*d/2*log(alpha)+m/2*sum(log(1+alpha*eigval))-0.5*sum(B(eye(d)==1)./(1+alpha*eigval));
