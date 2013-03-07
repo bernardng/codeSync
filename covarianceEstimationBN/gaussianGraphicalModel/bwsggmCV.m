@@ -3,12 +3,12 @@
 %           kFolds = #folds for cross validation
 %           nLevels = #levels for choosing lambda 
 %           nGridPts = #grid points per level
-%           weight = dxd weights on |Kij|, currently set to exp(-weight/sigma) 
+%           weight = dxd weights on |Kij|, currently set to exp(-(weight~=0)/sigma) with weight binarized
 %           nWt = #grid points for sigma
 % Output:   K = dxd sparse inverse covariance matrix
 %           lambdaBest = best lambda based on data likelihood
 %           sigmaBest = best sigma based on data likelihood
-function [K,lambdaBest,sigmaBest] = wsggmCV(X,kFolds,nLevels,nGridPts,weight,nWt)
+function [K,lambdaBest,sigmaBest] = bwsggmCV(X,kFolds,nLevels,nGridPts,weight,nWt)
 addpath(genpath('/home/bernardn/matlabToolboxes/QUIC'));
 [n,d] = size(X);
 S = cov(X);
@@ -33,12 +33,12 @@ for i = 1:nLevels
         end
     end
     scaleGrid = fliplr(scaleGrid); % Always in descending order
-    [~,ind,~] = find(abs(ones(length(scaleAcc),1)*scaleGrid-scaleAcc'*ones(1,length(scaleGrid)))<1e-12); % More robust than using set functions
+    [dummy,ind] = find(abs(ones(length(scaleAcc),1)*scaleGrid-scaleAcc'*ones(1,length(scaleGrid)))<1e-12); % More robust than using set functions
     scaleGridMod = sort([scaleGrid(setdiff(1:length(scaleGrid),ind)),scaleBest],2,'descend'); % Remove computed scales
     scaleAcc = [scaleAcc,scaleGridMod]; % Store computed scales
-    lb = prctile(weight(weight>0),25);
-    ub = prctile(weight(weight>0),75);
-    sigmaGrid = linspace(lb,ub,nWt); % Between 25th and 75th percentile
+    lb = 0.1;
+    ub = 0.9;
+    sigmaGrid = linspace(lb,ub,nWt); 
     evid = -inf*ones(length(scaleGridMod),nWt,kFolds);
     % Cross validation to set sparsity level
     for k = 1:kFolds
@@ -47,11 +47,11 @@ for i = 1:nLevels
         Strain = cov(Xtrain);
         Stest = cov(Xtest);
         for j = 1:length(scaleGridMod)
-            % K = QUIC('path',Strain,lambdaMax.*scaleGridMod(j).*~eye(d),exp(-weight/sigmaGrid),1e-9,2,200);
-    	    for w = 1:nWt
-                K(:,:,w) = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d),1e-9,2,200);
-                dg(w) = dualGap(K(:,:,w),Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d))
-                if dg(w) < 1e-5                
+            %K = QUIC('path',Strain,lambdaMax.*scaleGridMod(j).*~eye(d),exp(-weight/sigmaGrid),1e-9,2,200);
+            for w = 1:nWt
+                K(:,:,w) = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*exp(-(weight~=0)/sigmaGrid(w)).*~eye(d),1e-9,2,200);
+                dg(w) = dualGap(K(:,:,w),Strain,lambdaMax.*scaleGridMod(j).*exp(-(weight~=0)/sigmaGrid(w)).*~eye(d))
+                if dg(w) < 1e-5
                     evid(j,w,k) = logDataLikelihood(Stest,K(:,:,w));
                 end
             end

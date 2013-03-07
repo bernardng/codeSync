@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', dest='filepath')
     filepath = parser.parse_args().filepath
     path, afile = os.path.split(filepath)
-    afile = afile.replace('.nii','.mat')
+    afile = afile.replace('.nii','_coords.mat')
     template_img = as_volume_img(filepath)
     template = template_img.get_data()
     rois = np.unique(template)
@@ -28,5 +28,6 @@ if __name__ == '__main__':
     roi_cen = np.vstack((roi_cen.T, np.ones(n_rois))
     parcel_cen_mni = np.dot(template_img.affine, roi_cen)
     parcel_cen_mni = parcel_cen_mni[0:3].T
+    io.savemat(os.path.join(path, afile), {"coords": parcel_cen_mni})
 
 

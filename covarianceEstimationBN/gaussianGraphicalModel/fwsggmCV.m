@@ -3,12 +3,10 @@
 %           kFolds = #folds for cross validation
 %           nLevels = #levels for choosing lambda 
 %           nGridPts = #grid points per level
-%           weight = dxd weights on |Kij|, currently set to exp(-weight/sigma) 
-%           nWt = #grid points for sigma
+%           weight = dxd weights on |Kij| fixed without rescaling, e.g. weight = probabilities 
 % Output:   K = dxd sparse inverse covariance matrix
 %           lambdaBest = best lambda based on data likelihood
-%           sigmaBest = best sigma based on data likelihood
-function [K,lambdaBest,sigmaBest] = wsggmCV(X,kFolds,nLevels,nGridPts,weight,nWt)
+function [K,lambdaBest] = fwsggmCV(X,kFolds,nLevels,nGridPts,weight)
 addpath(genpath('/home/bernardn/matlabToolboxes/QUIC'));
 [n,d] = size(X);
 S = cov(X);
@@ -36,10 +34,7 @@ for i = 1:nLevels
     [~,ind,~] = find(abs(ones(length(scaleAcc),1)*scaleGrid-scaleAcc'*ones(1,length(scaleGrid)))<1e-12); % More robust than using set functions
     scaleGridMod = sort([scaleGrid(setdiff(1:length(scaleGrid),ind)),scaleBest],2,'descend'); % Remove computed scales
     scaleAcc = [scaleAcc,scaleGridMod]; % Store computed scales
-    lb = prctile(weight(weight>0),25);
-    ub = prctile(weight(weight>0),75);
-    sigmaGrid = linspace(lb,ub,nWt); % Between 25th and 75th percentile
-    evid = -inf*ones(length(scaleGridMod),nWt,kFolds);
+    evid = -inf*ones(length(scaleGridMod),kFolds);
     % Cross validation to set sparsity level
     for k = 1:kFolds
         Xtrain = X(trainInd{k},:);
@@ -47,29 +42,23 @@ for i = 1:nLevels
         Strain = cov(Xtrain);
         Stest = cov(Xtest);
         for j = 1:length(scaleGridMod)
-            % K = QUIC('path',Strain,lambdaMax.*scaleGridMod(j).*~eye(d),exp(-weight/sigmaGrid),1e-9,2,200);
-    	    for w = 1:nWt
-                K(:,:,w) = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d),1e-9,2,200);
-                dg(w) = dualGap(K(:,:,w),Strain,lambdaMax.*scaleGridMod(j).*exp(-weight/sigmaGrid(w)).*~eye(d))
-                if dg(w) < 1e-5                
-                    evid(j,w,k) = logDataLikelihood(Stest,K(:,:,w));
-                end
+            if j == 1
+                K = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*weight.*~eye(d),1e-9,2,200);
+            else
+                K = QUIC('default',Strain,lambdaMax.*scaleGridMod(j).*weight.*~eye(d),1e-9,2,200,K,inv(K));
             end
-            if sum(dg < 1e-5)==0
+            dg = dualGap(K,Strain,lambdaMax.*scaleGridMod(j).*weight.*~eye(d))
+            % Check convergence
+            if dg < 1e-5
+                evid(j,k) = logDataLikelihood(Stest,K);
+            else
                 break;
             end
         end
     end
-    evidAve = mean(evid,3);
-    evidMax = max(evidAve(:));
-    ind = find(evidAve==evidMax);
-    [x,y] = ind2sub(size(evidAve),ind);
-    xMin = min(x);
-    y = max(y(x==xMin));
-    x = xMin;
-    scaleBest = scaleGridMod(x);
-    sigmaBest = sigmaGrid(y);
+    [dummy,ind] = max(mean(evid,2));
+    scaleBest = scaleGridMod(ind);
 end
 % Compute sparse inverse covariance using optimal lambda
 lambdaBest = lambdaMax*scaleBest;
-K = QUIC('default',S,lambdaBest.*exp(-weight/sigmaBest).*~eye(d),1e-9,2,200);
+K = QUIC('default',S,lambdaBest.*weight.*~eye(d),1e-9,2,200);

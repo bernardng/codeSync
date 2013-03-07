@@ -6,7 +6,7 @@
 %           maxIter = max # of iterations for each sgggm estimation
 % Output:   Kgrp = pxp sparse group precision matrix
 %           lambdaBest = optimal sparsity level
-function [Kgrp,lambdaBest] = sgggmADMMcv(X,nLevels,kFolds,nGridPts,maxIter)
+function [Kgrp,Ksub,lambdaBest] = sgggmADMMcv(X,nLevels,kFolds,nGridPts,maxIter)
 filepath = 'D:\research\';
 addpath(genpath([filepath,'covarianceEstimationBN\']));
 [n,d,s] = size(X);
@@ -35,7 +35,7 @@ for k = 1:kFolds
 end
 matlabpoolUsed = 0;
 try
-    matlabpool('3');
+    matlabpool('8');
 catch ME
     matlabpoolUsed = 1;
 end
@@ -46,9 +46,9 @@ for i = 1:nLevels
         scaleGrid = logspace(log10(scaleMin),log10(scaleMax),nGridPts);
     else
         if abs(scaleBest-scaleGridMod(1))<1e-12
-            scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)*(10^(1/(2*i)))),nGridPts+1);
+            scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)*(10^(1/(2*i)))),nGridPts+2);
         elseif abs(scaleBest-scaleGridMod(end))<1e-12
-            scaleGrid = logspace(log10(scaleGridMod(end)/(10^(1/(2*i)))),log10(scaleGridMod(end-1)),nGridPts+1);
+            scaleGrid = logspace(log10(scaleGridMod(end)/(10^(1/(2*i)))),log10(scaleGridMod(end-1)),nGridPts+2);
         else
             ind = find(abs(scaleGridMod-scaleBest)<1e-12);
             scaleGrid = logspace(log10(scaleGridMod(ind+1)),log10(scaleGridMod(ind-1)),nGridPts+2);
@@ -63,7 +63,7 @@ for i = 1:nLevels
     for k = 1:kFolds
         for j = 1:length(scaleGridMod)
             disp(['Grid point ',int2str(j)]);
-            [KgrpTrain,converged] = sgggmADMM(Xtrain(:,:,:,k),lambdaMax*scaleGridMod(j),maxIter);
+            [KgrpTrain,dummy,converged] = sgggmADMM(Xtrain(:,:,:,k),lambdaMax*scaleGridMod(j),maxIter);
             if converged
                 logDL = 0;
                 for sub = 1:s                
@@ -82,5 +82,5 @@ if matlabpoolUsed == 0
     matlabpool('close');
 end
 lambdaBest = lambdaMax*scaleBest;
-Kgrp = sgggmADMM(X,lambdaBest);
+[Kgrp,Ksub] = sgggmADMM(X,lambdaBest,maxIter);
 

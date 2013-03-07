@@ -7,7 +7,7 @@
 %           lambdaBest = best lambda based on data likelihood
 % Notes:    Please add path to QUIC
 function [K,lambdaBest] = sggmCV(X,kFolds,nLevels,nGridPts)
-addpath(genpath('/home/bn228083/matlabToolboxes/quic/'));
+addpath(genpath('/home/bernardn/matlabToolboxes/QUIC/'));
 [n,d] = size(X);
 S = cov(X);
 lambdaMax = max(abs(S(~eye(d)))); % lambda at which all off diagonal elements are shrunk to zero
@@ -22,9 +22,9 @@ for i = 1:nLevels
         scaleGrid = logspace(log10(scaleMin),log10(scaleMax),nGridPts);
     else
         if abs(scaleBest-scaleGridMod(1))<1e-12
-            scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)*(10^(1/(2*i)))),nGridPts+1);
+            scaleGrid = logspace(log10(scaleGridMod(2)),log10(scaleGridMod(1)*(10^(1/(2*i)))),nGridPts+2);
         elseif abs(scaleBest-scaleGridMod(end))<1e-12
-            scaleGrid = logspace(log10(scaleGridMod(end)/(10^(1/(2*i)))),log10(scaleGridMod(end-1)),nGridPts+1);
+            scaleGrid = logspace(log10(scaleGridMod(end)/(10^(1/(2*i)))),log10(scaleGridMod(end-1)),nGridPts+2);
         else
             ind = find(abs(scaleGridMod-scaleBest)<1e-12);
             scaleGrid = logspace(log10(scaleGridMod(ind+1)),log10(scaleGridMod(ind-1)),nGridPts+2);
@@ -43,12 +43,12 @@ for i = 1:nLevels
         Stest = cov(Xtest);
         % K = QUIC('path',Strain,lambdaMax*~eye(d),scaleGridMod,1e-9,2,200);
         for j = 1:length(scaleGridMod)
-	    if j == 1	    
-		K = QUIC('default',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200);
-	    else
-		K = QUIC('default',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200,K,inv(K));
-	    end
-	    dg = dualGap(K,Strain,lambdaMax*scaleGridMod(j)*~eye(d))
+            if j == 1	    
+                K = QUIC('default',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200);
+            else
+                K = QUIC('default',Strain,lambdaMax*scaleGridMod(j)*~eye(d),1e-9,2,200,K,inv(K));
+            end
+            dg = dualGap(K,Strain,lambdaMax*scaleGridMod(j)*~eye(d))
             % Check convergence
             if dg < 1e-5
                 evid(j,k) = logDataLikelihood(Stest,K);
