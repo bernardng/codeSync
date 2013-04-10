@@ -60,7 +60,9 @@ for i = 1:nLevels
             end
         end
         temp = evid(:,:,k);
-        evid(:,:,k) = temp/max(abs(temp(~isinf(temp(:)))));
+        if sum(~inf(temp(:))) > 0
+            evid(:,:,k) = temp/max(abs(temp(~isinf(temp(:)))));
+        end
     end
     evidAve = mean(evid,3);
     evidMax = max(evidAve(:));
