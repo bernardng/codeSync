@@ -59,6 +59,8 @@ for i = 1:nLevels
                 break;
             end
         end
+        temp = evid(:,:,k);
+        evid(:,:,k) = temp/max(abs(temp(~isinf(temp(:)))));
     end
     evidAve = mean(evid,3);
     evidMax = max(evidAve(:));

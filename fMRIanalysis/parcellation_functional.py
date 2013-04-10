@@ -21,7 +21,7 @@ from scipy.ndimage.morphology import binary_closing, binary_dilation, generate_b
 from scipy.ndimage import label
 
 # Choose number of parcels
-n_parcels = 150.0
+n_parcels = 500.0
 
 # Change path to files
 BASE_DIR = "/media/GoFlex/research/data/imagen/"
