@@ -57,7 +57,7 @@ for i = 1:nLevels
         end
         temp = evid(:,k);
         if sum(~inf(temp(:))) > 0
-            evid(:,k) = temp/std(temp(~isinf(temp(:))));
+            evid(:,k) = temp/abs(median(temp(~isinf(temp(:)))));
         end
     end
     [dummy,ind] = max(mean(evid,2));
