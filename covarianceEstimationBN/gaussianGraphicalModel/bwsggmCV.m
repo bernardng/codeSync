@@ -61,7 +61,7 @@ for i = 1:nLevels
         end
         temp = evid(:,:,k);
         if sum(~inf(temp(:))) > 0
-            evid(:,:,k) = temp/max(abs(temp(~isinf(temp(:)))));
+            evid(:,:,k) = temp/std(temp(~isinf(temp(:))));
         end
     end
     evidAve = mean(evid,3);

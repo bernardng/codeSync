@@ -17,11 +17,11 @@ if __name__ == '__main__':
     bval = np.loadtxt(bval_path)
     bvec = np.loadtxt(bvec_path)
     
-    b0 = dwi[:, :, :, bval == 0]
-    dwi_reorder = np.concatenate(b0, dwi[:, :, :, bval != 0]), axis=3)
-    bvec_reorder = np.zeros((np.sum(bval == 0), 3))
+    b0_ave = np.mean(dwi[:, :, :, bval == 0], axis=3)
+    dwi_reorder = np.concatenate((b0_ave[:, :, :, np.newaxis], dwi[:, :, :, bval != 0]), axis=3)
+    bvec_reorder = np.array([0, 0, 0])
     bvec_reorder = np.vstack((bvec_reorder, bvec[bval != 0]))
-    bval_reorder = np.zeros(np.sum(bval == 0))
+    bval_reorder = np.array([0])
     bval_reorder = np.hstack((bval_reorder, bval[bval != 0]))
    
     nii = nib.Nifti1Image(dwi_reorder, dwi_img.affine)
