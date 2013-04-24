@@ -59,10 +59,6 @@ for i = 1:nLevels
                 break;
             end
         end
-        temp = evid(:,:,k);
-        if sum(~inf(temp(:))) > 0
-            evid(:,:,k) = temp/abs(median(temp(~isinf(temp(:)))));
-        end
     end
     evidAve = mean(evid,3);
     evidMax = max(evidAve(:));

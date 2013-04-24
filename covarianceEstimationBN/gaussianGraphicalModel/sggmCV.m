@@ -56,10 +56,6 @@ for i = 1:nLevels
                 break;
             end
         end
-        temp = evid(:,k);
-        if sum(~isinf(temp(:))) > 0
-            evid(:,k) = temp/abs(median(temp(~isinf(temp(:)))));
-        end
     end
     [dummy,ind] = max(mean(evid,2));
     scaleBest = scaleGridMod(ind);
